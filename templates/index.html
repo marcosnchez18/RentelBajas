@@ -36,7 +36,7 @@
         </div>
 
         <!-- Formulario de búsqueda -->
-        <form method="POST" class="mt-3">
+        <form id="searchForm" class="mt-3">
             <div class="form-group">
                 <label for="dni">Introduzca el DNI del cliente:</label>
                 <input type="text" class="form-control" id="dni" name="dni" required>
@@ -45,9 +45,8 @@
         </form>
 
         <!-- Mensaje de error o datos del cliente -->
-        {% if error %}
-            <div class="alert alert-danger mt-3">{{ error }}</div>
-        {% elif cliente_data %}
+        <div id="error" class="alert alert-danger mt-3" style="display:none;"></div>
+        <div id="clienteData" style="display:none;">
             <h2 class="mt-5">Datos del Cliente</h2>
             <table class="table mt-3">
                 <thead>
@@ -63,25 +62,60 @@
                         <th>Facturas Pendientes</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ cliente_data[0].dni }}</td>
-                        <td>{{ cliente_data[0].nombre }}</td>
-                        <td>{{ cliente_data[0].telefonofijo }}</td>
-                        <td>{{ cliente_data[0].telefonomovil }}</td>
-                        <td>{{ cliente_data[0].direccion }}</td>
-                        <td>{{ cliente_data[0].poblacion }}</td>
-                        <td>{{ cliente_data[0].codpostal }}</td>
-                        <td>{{ cliente_data[0].email }}</td>
-                        <td>{{ cliente_data[0].NFacPendientes }}</td>
-                    </tr>
+                <tbody id="clienteTableBody">
                 </tbody>
             </table>
-        {% endif %}
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById("searchForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const dni = document.getElementById("dni").value;
+            const url = "http://10.58.6.89:8082/get_data_client_for_dni";
+
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ dni: dni })
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById("error").style.display = "block";
+                    document.getElementById("error").textContent = data.error;
+                    document.getElementById("clienteData").style.display = "none";
+                } else {
+                    document.getElementById("error").style.display = "none";
+                    document.getElementById("clienteData").style.display = "block";
+                    
+                    const clienteTableBody = document.getElementById("clienteTableBody");
+                    clienteTableBody.innerHTML = `
+                        <tr>
+                            <td>${data.dni}</td>
+                            <td>${data.nombre}</td>
+                            <td>${data.telefonofijo}</td>
+                            <td>${data.telefonomovil}</td>
+                            <td>${data.direccion}</td>
+                            <td>${data.poblacion}</td>
+                            <td>${data.codpostal}</td>
+                            <td>${data.email}</td>
+                            <td>${data.NFacPendientes}</td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById("error").style.display = "block";
+                document.getElementById("error").textContent = "Error al conectar con la API.";
+                document.getElementById("clienteData").style.display = "none";
+            }
+        });
+    </script>
 </body>
 </html>
