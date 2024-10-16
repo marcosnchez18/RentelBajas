@@ -87,26 +87,27 @@
                 });
                 const data = await response.json();
 
-                if (data.error) {
+                if (data.length === 0 || data.error) {
                     document.getElementById("error").style.display = "block";
-                    document.getElementById("error").textContent = data.error;
+                    document.getElementById("error").textContent = data.error || "No se encontraron datos para el DNI proporcionado.";
                     document.getElementById("clienteData").style.display = "none";
                 } else {
                     document.getElementById("error").style.display = "none";
                     document.getElementById("clienteData").style.display = "block";
                     
+                    const cliente = data[0]; // Acceder al primer cliente en la lista
                     const clienteTableBody = document.getElementById("clienteTableBody");
                     clienteTableBody.innerHTML = `
                         <tr>
-                            <td>${data.dni}</td>
-                            <td>${data.nombre}</td>
-                            <td>${data.telefonofijo}</td>
-                            <td>${data.telefonomovil}</td>
-                            <td>${data.direccion}</td>
-                            <td>${data.poblacion}</td>
-                            <td>${data.codpostal}</td>
-                            <td>${data.email}</td>
-                            <td>${data.NFacPendientes}</td>
+                            <td>${cliente.dni}</td>
+                            <td>${cliente.nombre}</td>
+                            <td>${cliente.telefonofijo}</td>
+                            <td>${cliente.telefonomovil}</td>
+                            <td>${cliente.direccion}</td>
+                            <td>${cliente.poblacion}</td>
+                            <td>${cliente.codpostal}</td>
+                            <td>${cliente.email}</td>
+                            <td>${cliente.NFacPendientes}</td>
                         </tr>
                     `;
                 }
