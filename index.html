@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generar Sepa</title>
+    <link rel="icon" type="image/x-icon" href="/public/img/rentelfavicon-removebg-preview.png" />
+    <link rel="stylesheet" href="./public/style/bootstrap.min.css" />
+    <link rel="stylesheet" href="/public/style/selector.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+    <style>
+        th {
+            background-color: rgb(211, 209, 209);
+        }
+    </style>
+    <div id="containerSepa" style="display: flex; justify-content: center; align-items: center; height: 30vh;">
+        <div class="card col-md-5 text-left mx-auto container-sm shadow">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/home">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Buscar cliente</li>
+                </ol>
+            </nav>
+            <div class="card-body">
+                <div>
+                    <form id="formularioSepa">
+                        <h3 class="col-md-6 mx-auto">Buscar cliente por DNI</h3>
+                        <div class="col-md-6 mx-auto">
+                            <label class="form-label" for="clienteDNI">DNI:</label>
+                            <div class="d-flex">
+                                <input class="form-control mb-3" type="text" id="clienteDNI" name="clienteDNI" />
+
+                                <button type="button" onclick="buscarCliente()" class="btn btn-primary btn-sm mb-3" id="btnBuscarCliente">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search"
+                                        viewBox="0 0 16 16">
+                                        <path
+                                            d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid mt-3">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Generar SEPA</th>
+                        <th>Nombre</th>
+                        <th>DNI</th>
+                        <th>Teléfono movil</th>
+                        <th>Email</th>
+                        <th>Dirección</th>
+                        <th>Localidad</th>
+                        <th>Provincia</th>
+                        <th>Código postal</th>
+                        <th>Usuario</th>
+                        <th>Prod.contratados</th>
+                    </tr>
+                </thead>
+                <tbody id="tablebody">
+                    <!-- Los datos se mostrarán aquí -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        function buscarCliente() {
+            // Obtén el valor del campo DNI
+            const dni = document.getElementById("clienteDNI").value;
+
+            // Realiza la petición AJAX a la API en funciones.py
+            $.ajax({
+                url: `/buscar_cliente`,
+                type: 'GET',
+                data: { dni: dni },
+                success: function(response) {
+                    // Limpia el contenido actual de la tabla
+                    $("#tablebody").empty();
+
+                    // Verifica si hay clientes en la respuesta
+                    if (response && response.clientes) {
+                        response.clientes.forEach(cliente => {
+                            // Agrega una fila por cada cliente en la respuesta
+                            $("#tablebody").append(`
+                                <tr>
+                                    <td><button class="btn btn-success btn-sm" onclick="generarSepa('${cliente.dni}')">Generar SEPA</button></td>
+                                    <td>${cliente.nombre}</td>
+                                    <td>${cliente.dni}</td>
+                                    <td>${cliente.telefono_movil}</td>
+                                    <td>${cliente.email}</td>
+                                    <td>${cliente.direccion}</td>
+                                    <td>${cliente.localidad}</td>
+                                    <td>${cliente.provincia}</td>
+                                    <td>${cliente.codigo_postal}</td>
+                                    <td>${cliente.usuario}</td>
+                                    <td>${cliente.prod_contratados}</td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        // Muestra un mensaje si no se encuentran clientes
+                        $("#tablebody").append('<tr><td colspan="11">No se encontraron clientes con ese DNI</td></tr>');
+                    }
+                },
+                error: function() {
+                    alert("Hubo un error al buscar el cliente. Verifica la conexión con la API.");
+                }
+            });
+        }
+
+        // Función para manejar la acción del botón "Generar SEPA"
+        function generarSepa(dni) {
+            alert(`Función Generar SEPA para el DNI: ${dni}`);
+            // Aquí se podría hacer otra petición a la API
+        }
+    </script>
+</body>
+
+</html>
