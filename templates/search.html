@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Clientes</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Buscador de Clientes por DNI</h1>
+        <form method="POST" class="mt-3">
+            <div class="form-group">
+                <label for="dni">Introduzca el DNI:</label>
+                <input type="text" class="form-control" id="dni" name="dni" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+
+        {% if error %}
+            <div class="alert alert-danger mt-3">{{ error }}</div>
+        {% elif cliente_data %}
+            <h2 class="mt-5">Datos del Cliente</h2>
+            <table class="table mt-3">
+                <thead>
+                    <tr>
+                        <th>DNI</th>
+                        <th>Nombre</th>
+                        <th>Teléfono Fijo</th>
+                        <th>Teléfono Móvil</th>
+                        <th>Dirección</th>
+                        <th>Población</th>
+                        <th>Código Postal</th>
+                        <th>Email</th>
+                        <th>Número de Cuenta</th>
+                        <th>Facturas Pendientes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ cliente_data[0].dni }}</td>
+                        <td>{{ cliente_data[0].nombre }}</td>
+                        <td>{{ cliente_data[0].telefonofijo }}</td>
+                        <td>{{ cliente_data[0].telefonomovil }}</td>
+                        <td>{{ cliente_data[0].direccion }}</td>
+                        <td>{{ cliente_data[0].poblacion }}</td>
+                        <td>{{ cliente_data[0].codpostal }}</td>
+                        <td>{{ cliente_data[0].email }}</td>
+                        <td>{{ cliente_data[0].numCuenta }}</td>
+                        <td>{{ cliente_data[0].NFacPendientes }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</body>
+</html>
