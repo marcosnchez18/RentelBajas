@@ -102,7 +102,9 @@
                     clienteTableBody.innerHTML = ""; // Limpiar filas previas
 
                     data.forEach(cliente => {
-                        const colorClass = cliente.NFacPendientes > 0 ? 'style="color:red;"' : '';
+                        const facturasPendientes = cliente.NFacPendientes > 0 
+                            ? `<span class="badge badge-danger">${cliente.NFacPendientes}</span>`
+                            : cliente.NFacPendientes;
                         const row = `
                             <tr>
                                 <td>${cliente.dni}</td>
@@ -113,7 +115,7 @@
                                 <td>${cliente.poblacion}</td>
                                 <td>${cliente.codpostal}</td>
                                 <td>${cliente.email}</td>
-                                <td ${colorClass}>${cliente.NFacPendientes}</td>
+                                <td>${facturasPendientes}</td>
                                 <td>
                                     <button class="btn btn-info">
                                         <i class="fas fa-wifi"></i>
