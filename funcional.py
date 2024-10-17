@@ -4,7 +4,7 @@ import requests
 url = "http://10.58.6.89:8082/get_data_client_for_dni"
 
 # DNI que quieres buscar
-dni = "73660072L"  # Reemplaza esto con el DNI que deseas buscar
+dni = "49035874N"  # Reemplaza esto con el DNI que deseas buscar
 
 # Datos a enviar en el cuerpo de la petición POST
 data = {
