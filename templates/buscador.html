@@ -1,12 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buscador de Clientes</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Mejorar el espaciado y estilo general */
+        body {
+            background-color: #f9f9f9;
+        }
+
+        .navbar {
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            width: 50%;
+            margin: 0 auto;
+        }
+
+        /* Estilo para la tabla centrada */
+        .table-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .table {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        /* Aseguramos que todo se muestre en una sola línea */
+        .table td,
+        .table th {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+        }
+
+        /* Estilo para las cajitas de productos */
+        .product-box {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .product-movil {
+            background-color: #28a745;
+        }
+
+        .product-fijo {
+            background-color: #ffc107;
+        }
+
+        .product-centralita {
+            background-color: #17a2b8;
+        }
+
+        .product-fibra {
+            background-color: #007bff;
+        }
+
+        .product-tv {
+            background-color: #fd7e14;
+        }
+    </style>
 </head>
+
 <body>
     <!-- Barra de navegación superior -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -32,43 +106,46 @@
     <div class="container">
         <!-- Título y Logo -->
         <div class="text-center my-4">
-            <img src="../img/logo.png" alt="Logo" style="width: 100px;">
+            
             <h1 class="mt-3">Buscar Cliente</h1>
         </div>
 
-        <!-- Formulario de búsqueda -->
+        <!-- Formulario de búsqueda con lupa -->
         <form id="searchForm" class="mt-3">
-            <div class="form-group">
-                <label for="dni">Introduzca el DNI del cliente:</label>
-                <input type="text" class="form-control" id="dni" name="dni" required>
+            <div class="input-group">
+                <input type="text" class="form-control" id="dni" name="dni" placeholder="Introduzca el DNI del cliente" required>
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Buscar</button>
         </form>
 
         <!-- Mensaje de error o datos del cliente -->
         <div id="error" class="alert alert-danger mt-3" style="display:none;"></div>
         <div id="clienteData" style="display:none;">
-            <h2 class="mt-5 text-center">Datos</h2>
+            
 
-            <table class="table mt-3">
-                <thead>
-                    <tr>
-                        <th>DNI</th>
-                        <th>Nombre</th>
-                        <th>Teléfono Fijo</th>
-                        <th>Teléfono Móvil</th>
-                        <th>Dirección</th>
-                        <th>Población</th>
-                        <th>Código Postal</th>
-                        <th>Email</th>
-                        <th>Facturas Pendientes</th>
-                        <th>Productos Contratados</th>
-                        <th>Estado del Cliente</th>
-                    </tr>
-                </thead>
-                <tbody id="clienteTableBody">
-                </tbody>
-            </table>
+            <!-- Tabla centrada -->
+            <div class="table-container">
+                <table class="table table-hover mt-3">
+                    <thead>
+                        <tr>
+                            <th>DNI</th>
+                            <th>Nombre Completo</th>
+                            <th>Teléfono Fijo</th>
+                            <th>Teléfono Móvil</th>
+                            <th>Dirección Completa</th>
+                            <th>Facturas Pendientes</th>
+                            <th>Productos Contratados</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clienteTableBody">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -76,7 +153,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        document.getElementById("searchForm").addEventListener("submit", async function(event) {
+        document.getElementById("searchForm").addEventListener("submit", async function (event) {
             event.preventDefault();
             const dni = document.getElementById("dni").value;
             const url = "http://10.58.6.89:8082/get_data_client_for_dni";
@@ -102,36 +179,31 @@
                     const clienteTableBody = document.getElementById("clienteTableBody");
                     clienteTableBody.innerHTML = ""; // Limpiar filas previas
 
-                    data.forEach((cliente, index) => {
-                        const facturasPendientes = cliente.NFacPendientes > 0 
+                    data.forEach((cliente) => {
+                        const facturasPendientes = cliente.NFacPendientes > 0
                             ? `<span class="badge badge-danger">${cliente.NFacPendientes}</span>`
                             : cliente.NFacPendientes;
                         const estadoCliente = cliente.Baja ? "Baja" : "Alta";
-                        
+
+                        // Generar cajas de productos con diferentes colores
+                        const productosContratados = `
+                            ${cliente.PMovil ? '<div class="product-box product-movil">Móvil</div>' : ''}
+                            ${cliente.Pfijo ? '<div class="product-box product-fijo">Fijo</div>' : ''}
+                            ${cliente.Pcentralita ? '<div class="product-box product-centralita">Centralita</div>' : ''}
+                            ${cliente.Pfibra ? '<div class="product-box product-fibra">Fibra</div>' : ''}
+                            ${cliente.Ptv ? '<div class="product-box product-tv">Televisión</div>' : ''}
+                        `;
+
+                        // Mostrar todo en una sola línea
                         const row = `
                             <tr>
                                 <td>${cliente.dni}</td>
                                 <td>${cliente.nombre}</td>
                                 <td>${cliente.telefonofijo}</td>
                                 <td>${cliente.telefonomovil}</td>
-                                <td>${cliente.direccion}</td>
-                                <td>${cliente.poblacion}</td>
-                                <td>${cliente.codpostal}</td>
-                                <td>${cliente.email}</td>
+                                <td>${cliente.direccion}, ${cliente.poblacion}, ${cliente.codpostal}</td>
                                 <td>${facturasPendientes}</td>
-                                <td>
-                                    <button class="btn btn-info" onclick="mostrarProductos(${index})">
-                                        Ver Productos
-                                    </button>
-                                    <div id="productos-${index}" class="mt-2" style="display: none;">
-                                        <ul class="list-group">
-                                            ${cliente.PMovil ? '<li class="list-group-item">Móvil</li>' : ''}
-                                            ${cliente.Pfijo ? '<li class="list-group-item">Fijo</li>' : ''}
-                                            ${cliente.Pcentralita ? '<li class="list-group-item">Centralita</li>' : ''}
-                                            ${cliente.Pfibra ? '<li class="list-group-item">Fibra</li>' : ''}
-                                        </ul>
-                                    </div>
-                                </td>
+                                <td>${productosContratados}</td>
                                 <td>${estadoCliente}</td>
                             </tr>
                         `;
@@ -144,11 +216,7 @@
                 document.getElementById("clienteData").style.display = "none";
             }
         });
-
-        function mostrarProductos(index) {
-            const productosDiv = document.getElementById(`productos-${index}`);
-            productosDiv.style.display = productosDiv.style.display === "none" ? "block" : "none";
-        }
     </script>
 </body>
+
 </html>

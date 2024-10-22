@@ -1,16 +1,91 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buscador de Clientes</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Mejorar el espaciado y estilo general */
+        body {
+            background-color: #f9f9f9;
+        }
+
+        .navbar {
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            width: 50%;
+            margin: 0 auto;
+        }
+
+        /* Estilo para la tabla centrada */
+        .table-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .table {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        /* Aseguramos que todo se muestre en una sola línea */
+        .table td,
+        .table th {
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+        }
+
+        /* Estilo para las cajitas de productos */
+        .product-box {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .product-movil {
+            background-color: #28a745;
+        }
+
+        .product-fijo {
+            background-color: #ffc107;
+        }
+
+        .product-centralita {
+            background-color: #17a2b8;
+        }
+
+        .product-fibra {
+            background-color: #007bff;
+        }
+
+        .product-tv {
+            background-color: #fd7e14;
+        }
+    </style>
 </head>
+
 <body>
     <!-- Barra de navegación superior -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">
-            <img src="logo.png" alt="Logo" style="width: 50px;">
+            <img src="../img/logo.png" alt="Logo" style="width: 50px;">
         </a>
         <div class="ml-auto">
             <ul class="navbar-nav">
@@ -31,57 +106,117 @@
     <div class="container">
         <!-- Título y Logo -->
         <div class="text-center my-4">
-            <img src="../img/logo.png" alt="Logo" style="width: 100px;">
             <h1 class="mt-3">Buscar Cliente</h1>
         </div>
 
-        <!-- Formulario de búsqueda -->
-        <form method="POST" class="mt-3">
-            <div class="form-group">
-                <label for="dni">Introduzca el DNI del cliente:</label>
-                <input type="text" class="form-control" id="dni" name="dni" required>
+        <!-- Formulario de búsqueda con lupa -->
+        <form id="searchForm" class="mt-3">
+            <div class="input-group">
+                <input type="text" class="form-control" id="dni" name="dni" placeholder="Introduzca el DNI del cliente" required>
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Buscar</button>
         </form>
-
+        <br/><br/><br/><br/>
         <!-- Mensaje de error o datos del cliente -->
-        {% if error %}
-            <div class="alert alert-danger mt-3">{{ error }}</div>
-        {% elif cliente_data %}
-            <h2 class="mt-5">Datos del Cliente</h2>
-            <table class="table mt-3">
-                <thead>
-                    <tr>
-                        <th>DNI</th>
-                        <th>Nombre</th>
-                        <th>Teléfono Fijo</th>
-                        <th>Teléfono Móvil</th>
-                        <th>Dirección</th>
-                        <th>Población</th>
-                        <th>Código Postal</th>
-                        <th>Email</th>
-                        <th>Facturas Pendientes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ cliente_data[0].dni }}</td>
-                        <td>{{ cliente_data[0].nombre }}</td>
-                        <td>{{ cliente_data[0].telefonofijo }}</td>
-                        <td>{{ cliente_data[0].telefonomovil }}</td>
-                        <td>{{ cliente_data[0].direccion }}</td>
-                        <td>{{ cliente_data[0].poblacion }}</td>
-                        <td>{{ cliente_data[0].codpostal }}</td>
-                        <td>{{ cliente_data[0].email }}</td>
-                        <td>{{ cliente_data[0].NFacPendientes }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        {% endif %}
+        <div id="error" class="alert alert-danger mt-3" style="display:none;"></div>
+        <div id="clienteData" style="display:none;">
+
+            <!-- Tabla centrada -->
+            <div class="table-container">
+                <table class="table table-hover mt-3">
+                    <thead>
+                        <tr>
+                            <th>DNI</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Teléfono Fijo</th>
+                            <th>Teléfono Móvil</th>
+                            <th>Dirección</th>
+                            <th>Facturas Pendientes</th>
+                            <th>Productos</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clienteTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById("searchForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            const dni = document.getElementById("dni").value;
+            const url = "http://10.58.6.89:8082/get_data_client_for_dni";
+
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ dni: dni })
+                });
+                const data = await response.json();
+
+                if (data.length === 0 || data.error) {
+                    document.getElementById("error").style.display = "block";
+                    document.getElementById("error").textContent = data.error || "No se encontraron datos para el DNI proporcionado.";
+                    document.getElementById("clienteData").style.display = "none";
+                } else {
+                    document.getElementById("error").style.display = "none";
+                    document.getElementById("clienteData").style.display = "block";
+
+                    const clienteTableBody = document.getElementById("clienteTableBody");
+                    clienteTableBody.innerHTML = ""; // Limpiar filas previas
+
+                    data.forEach((cliente) => {
+                        const facturasPendientes = cliente.NFacPendientes > 0
+                            ? `<span class="badge badge-danger">${cliente.NFacPendientes}</span>`
+                            : cliente.NFacPendientes;
+                        const estadoCliente = cliente.Baja ? "Baja" : "Alta";
+
+                        // Generar cajas de productos con diferentes colores
+                        const productosContratados = `
+                            ${cliente.PMovil ? '<div class="product-box product-movil">Móvil</div>' : ''}
+                            ${cliente.Pfijo ? '<div class="product-box product-fijo">Fijo</div>' : ''}
+                            ${cliente.Pcentralita ? '<div class="product-box product-centralita">Centralita</div>' : ''}
+                            ${cliente.Pfibra ? '<div class="product-box product-fibra">Fibra</div>' : ''}
+                            ${cliente.Ptv ? '<div class="product-box product-tv">Televisión</div>' : ''}
+                        `;
+
+                        // Mostrar todo en una sola línea, incluyendo el email
+                        const row = `
+                            <tr>
+                                <td>${cliente.dni}</td>
+                                <td>${cliente.nombre}</td>
+                                <td>${cliente.email ? cliente.email : "No disponible"}</td>
+                                <td>${cliente.telefonofijo}</td>
+                                <td>${cliente.telefonomovil}</td>
+                                <td>${cliente.direccion}, ${cliente.poblacion}, ${cliente.codpostal}</td>
+                                <td>${facturasPendientes}</td>
+                                <td>${productosContratados}</td>
+                                <td>${estadoCliente}</td>
+                            </tr>
+                        `;
+                        clienteTableBody.innerHTML += row;
+                    });
+                }
+            } catch (error) {
+                document.getElementById("error").style.display = "block";
+                document.getElementById("error").textContent = "Error al conectar con la API.";
+                document.getElementById("clienteData").style.display = "none";
+            }
+        });
+    </script>
 </body>
+
 </html>
