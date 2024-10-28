@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* Mejorar el espaciado y estilo general */
         body {
             background-color: #f9f9f9;
         }
@@ -22,7 +21,6 @@
             margin: 0 auto;
         }
 
-        /* Estilo para la tabla centrada */
         .table-container {
             display: flex;
             justify-content: center;
@@ -33,7 +31,12 @@
             margin: 0 auto;
         }
 
-        /* Aseguramos que todo se muestre en una sola línea */
+        .table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* Forzamos todo el contenido a estar en una sola línea */
         .table td,
         .table th {
             white-space: nowrap;
@@ -41,48 +44,18 @@
             vertical-align: middle;
         }
 
-        .table th {
-            background-color: #007bff;
-            color: white;
-        }
-
         .badge-danger {
             background-color: #dc3545;
         }
 
-        /* Estilo para las cajitas de productos */
-        .product-box {
+        .product-icons {
             display: inline-block;
-            padding: 10px;
-            margin: 5px;
-            border-radius: 5px;
-            color: white;
-        }
-
-        .product-movil {
-            background-color: #28a745;
-        }
-
-        .product-fijo {
-            background-color: #ffc107;
-        }
-
-        .product-centralita {
-            background-color: #17a2b8;
-        }
-
-        .product-fibra {
-            background-color: #007bff;
-        }
-
-        .product-tv {
-            background-color: #fd7e14;
+            margin: 0 5px;
         }
     </style>
 </head>
 
 <body>
-    <!-- Barra de navegación superior -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">
             <img src="../img/logo.png" alt="Logo" style="width: 50px;">
@@ -102,14 +75,11 @@
         </div>
     </nav>
 
-    <!-- Contenido principal -->
     <div class="container">
-        <!-- Título y Logo -->
         <div class="text-center my-4">
             <h1 class="mt-3">Buscar Cliente</h1>
         </div>
 
-        <!-- Formulario de búsqueda con lupa -->
         <form id="searchForm" class="mt-3">
             <div class="input-group">
                 <input type="text" class="form-control" id="dni" name="dni" placeholder="Introduzca el DNI del cliente" required>
@@ -120,12 +90,10 @@
                 </div>
             </div>
         </form>
-        <br/><br/><br/><br/>
-        <!-- Mensaje de error o datos del cliente -->
+
+        <br /><br /><br /><br />
         <div id="error" class="alert alert-danger mt-3" style="display:none;"></div>
         <div id="clienteData" style="display:none;">
-
-            <!-- Tabla centrada -->
             <div class="table-container">
                 <table class="table table-hover mt-3">
                     <thead>
@@ -152,10 +120,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        document.getElementById("searchForm").addEventListener("submit", async function (event) {
+        document.getElementById("searchForm").addEventListener("submit", async function(event) {
             event.preventDefault();
             const dni = document.getElementById("dni").value;
-            const url = "http://10.58.6.89:8082/get_data_client_for_dni";
+            const url = "http://10.58.6.89:8082/get_data_client_baja_for_dni";
 
             try {
                 const response = await fetch(url, {
@@ -176,7 +144,7 @@
                     document.getElementById("clienteData").style.display = "block";
 
                     const clienteTableBody = document.getElementById("clienteTableBody");
-                    clienteTableBody.innerHTML = ""; // Limpiar filas previas
+                    clienteTableBody.innerHTML = "";
 
                     data.forEach((cliente) => {
                         const facturasPendientes = cliente.NFacPendientes > 0
@@ -184,18 +152,16 @@
                             : cliente.NFacPendientes;
                         const estadoCliente = cliente.Baja ? "Baja" : "Alta";
 
-                        // Generar cajas de productos con diferentes colores
                         const productosContratados = `
-                            ${cliente.PMovil ? '<div class="product-box product-movil">Móvil</div>' : ''}
-                            ${cliente.Pfijo ? '<div class="product-box product-fijo">Fijo</div>' : ''}
-                            ${cliente.Pcentralita ? '<div class="product-box product-centralita">Centralita</div>' : ''}
-                            ${cliente.Pfibra ? '<div class="product-box product-fibra">Fibra</div>' : ''}
-                            ${cliente.Ptv ? '<div class="product-box product-tv">Televisión</div>' : ''}
+                            ${cliente.PMovil ? '<i class="fas fa-mobile-retro product-icons"></i>' : ''}
+                            ${cliente.Pfijo ? '<i class="fas fa-phone product-icons"></i>' : ''}
+                            ${cliente.Pcentralita ? '<i class="fas fa-rectangle-ad product-icons"></i>' : ''}
+                            ${cliente.Pfibra ? '<i class="fas fa-wifi product-icons"></i>' : ''}
+                            ${cliente.Ptv ? '<i class="fas fa-rectangle-ad product-icons"></i>' : ''}
                         `;
 
-                        // Mostrar todo en una sola línea, incluyendo el email
                         const row = `
-                            <tr>
+                            <tr data-dni="${cliente.dni}" class="cliente-row">
                                 <td>${cliente.dni}</td>
                                 <td>${cliente.nombre}</td>
                                 <td>${cliente.email ? cliente.email : "No disponible"}</td>
@@ -208,6 +174,14 @@
                             </tr>
                         `;
                         clienteTableBody.innerHTML += row;
+                    });
+
+                    // Añadir evento a las filas para redirigir al formulario
+                    document.querySelectorAll('.cliente-row').forEach(row => {
+                        row.addEventListener('click', function() {
+                            const dni = this.getAttribute('data-dni');
+                            window.location.href = `cliente_formulario.html?dni=${dni}`;
+                        });
                     });
                 }
             } catch (error) {
