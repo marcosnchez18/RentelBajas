@@ -7,26 +7,6 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <!-- Barra de navegación superior -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">
-            <img src="../img/logo.png" alt="Logo" style="width: 50px;">
-        </a>
-        <div class="ml-auto">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="search.html">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Sobre nosotros</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Contacto</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-
     <div class="container mt-5">
         <h2>Resumen del Cliente</h2>
         <form id="clienteForm">
@@ -54,19 +34,17 @@
                 <label for="direccion">Dirección:</label>
                 <input type="text" class="form-control" id="direccion" disabled>
             </div>
-
-            <h3 class="mt-5">Productos Contratados</h3>
-            <div id="productosResumen"></div>
-
-            <div class="text-center mt-4">
-                <button type="submit" class="btn btn-success">Confirmar</button>
-            </div>
         </form>
+
+        <h3 class="mt-5">Productos Contratados</h3>
+        <div id="productosResumen"></div>
     </div>
 
     <script>
+        // Obtener el DNI del cliente desde la URL
         const urlParams = new URLSearchParams(window.location.search);
         const clienteDNI = urlParams.get('dni');
+        console.log("DNI obtenido de la URL:", clienteDNI);
 
         async function obtenerDatosCliente(dni) {
             try {
@@ -84,6 +62,7 @@
 
                 const cliente = data[0];
 
+                // Completar el formulario con los datos del cliente
                 document.getElementById("dni").value = cliente.dni;
                 document.getElementById("nombre").value = cliente.nombre;
                 document.getElementById("email").value = cliente.email || "No disponible";
@@ -91,6 +70,7 @@
                 document.getElementById("telefonomovil").value = cliente.telefonomovil;
                 document.getElementById("direccion").value = `${cliente.direccion}, ${cliente.poblacion}, ${cliente.codpostal}`;
 
+                // Llamada para obtener productos del cliente usando el `id` obtenido
                 obtenerResumenProductos(cliente.id);
             } catch (error) {
                 console.error("Error al obtener datos del cliente:", error);
@@ -124,6 +104,8 @@
                             </li>`;
                     });
                     resumenHTML += `</ul>`;
+                } else {
+                    resumenHTML += `<h4>Líneas Móviles</h4><p>No hay líneas móviles contratadas.</p>`;
                 }
 
                 // Servicios Adicionales
@@ -141,6 +123,8 @@
                             </li>`;
                     });
                     resumenHTML += `</ul>`;
+                } else {
+                    resumenHTML += `<h4>Servicios Adicionales</h4><p>No hay servicios adicionales contratados.</p>`;
                 }
 
                 // Fijos
@@ -157,6 +141,8 @@
                             </li>`;
                     });
                     resumenHTML += `</ul>`;
+                } else {
+                    resumenHTML += `<h4>Fijos</h4><p>No hay servicios de fijos contratados.</p>`;
                 }
 
                 // Internet
@@ -173,14 +159,17 @@
                             </li>`;
                     });
                     resumenHTML += `</ul>`;
+                } else {
+                    resumenHTML += `<h4>Internet</h4><p>No hay servicios de internet contratados.</p>`;
                 }
 
-                document.getElementById("productosResumen").innerHTML = resumenHTML || "<p>No tiene productos contratados.</p>";
+                document.getElementById("productosResumen").innerHTML = resumenHTML;
             } catch (error) {
                 console.error("Error al obtener productos:", error);
             }
         }
 
+        // Ejecutar la función para cargar datos al abrir la página
         obtenerDatosCliente(clienteDNI);
     </script>
 </body>
