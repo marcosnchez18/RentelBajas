@@ -6,6 +6,7 @@
     <title>Resumen del Cliente</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <style>
         body {
             background-color: #f4f6f9;
@@ -15,7 +16,7 @@
             max-width: 900px;
             margin-top: 2rem;
         }
-        h2, h3 {
+        h2, h3, h4 {
             color: #34495e;
         }
         .card {
@@ -43,13 +44,6 @@
             background-color: #218838;
             border-color: #1e7e34;
         }
-        h4 {
-            color: #000;
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-        }
         ul {
             list-style-type: none;
             padding-left: 0;
@@ -60,10 +54,6 @@
             margin-bottom: 0.5rem;
             border-radius: 5px;
             font-size: 0.95rem;
-            color: #34495e;
-        }
-        li label {
-            font-weight: normal;
             color: #34495e;
         }
         .product-title {
@@ -87,38 +77,7 @@
 <body>
     <div class="container">
         <h2 class="text-center">Resumen del Cliente</h2>
-        <div class="card">
-            <form id="clienteForm">
-                <div class="form-group">
-                    <label for="dni">DNI:</label>
-                    <input type="text" class="form-control" id="dni" disabled>
-                </div>
-                <div class="form-group">
-                    <label for="nombre">Nombre:</label>
-                    <input type="text" class="form-control" id="nombre" disabled>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" class="form-control" id="email">
-                </div>
-                <div class="form-group">
-                    <label for="telefono">Teléfono Fijo:</label>
-                    <input type="text" class="form-control" id="telefonofijo" disabled>
-                </div>
-                <div class="form-group">
-                    <label for="movil">Teléfono Móvil:</label>
-                    <input type="text" class="form-control" id="telefonomovil" disabled>
-                </div>
-                <div class="form-group">
-                    <label for="direccion">Dirección:</label>
-                    <input type="text" class="form-control" id="direccion" disabled>
-                </div>
-            </form>
-        </div>
-
-        <h3 class="text-center">Productos Contratados</h3>
-        <div id="productosResumen" class="card"></div>
-
+        <div id="cuentasResumen"></div>
         <div class="text-center">
             <button type="button" class="btn btn-success" onclick="confirmarBaja()">Confirmar</button>
         </div>
@@ -127,7 +86,6 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const clienteDNI = urlParams.get('dni');
-        let productosDisponibles = false;
 
         async function obtenerDatosCliente(dni) {
             try {
@@ -139,19 +97,49 @@
                 const data = await response.json();
 
                 if (!data || data.length === 0) {
-                    document.getElementById("productosResumen").innerHTML = "<p>Error: Cliente no encontrado.</p>";
+                    document.getElementById("cuentasResumen").innerHTML = "<p>Error: Cliente no encontrado.</p>";
                     return;
                 }
 
-                const cliente = data[0];
-                document.getElementById("dni").value = cliente.dni;
-                document.getElementById("nombre").value = cliente.nombre;
-                document.getElementById("email").value = cliente.email || "No disponible";
-                document.getElementById("telefonofijo").value = cliente.telefonofijo;
-                document.getElementById("telefonomovil").value = cliente.telefonomovil;
-                document.getElementById("direccion").value = `${cliente.direccion}, ${cliente.poblacion}, ${cliente.codpostal}`;
+                let cuentasHTML = "";
+                data.forEach((cuenta, index) => {
+                    const cuentaLabel = data.length > 1 ? `<h4>Cuenta ${index + 1}</h4>` : '';
+                    cuentasHTML += `
+                        <div class="card">
+                            ${cuentaLabel}
+                            <form id="clienteForm_${cuenta.id}">
+                                <div class="form-group">
+                                    <label for="dni">DNI:</label>
+                                    <input type="text" class="form-control" value="${cuenta.dni}" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label for="nombre">Nombre:</label>
+                                    <input type="text" class="form-control" value="${cuenta.nombre}" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email:</label>
+                                    <input type="email" class="form-control" value="${cuenta.email || 'No disponible'}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="telefonofijo">Teléfono Fijo:</label>
+                                    <input type="text" class="form-control" value="${cuenta.telefonofijo}" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label for="telefonomovil">Teléfono Móvil:</label>
+                                    <input type="text" class="form-control" value="${cuenta.telefonomovil}" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label for="direccion">Dirección:</label>
+                                    <input type="text" class="form-control" value="${cuenta.direccion}, ${cuenta.poblacion}, ${cuenta.codpostal}" disabled>
+                                </div>
+                                <div id="productosResumen_${cuenta.id}"></div>
+                            </form>
+                        </div>`;
+                    obtenerResumenProductos(cuenta.id);
+                });
 
-                obtenerResumenProductos(cliente.id);
+                document.getElementById("cuentasResumen").innerHTML = cuentasHTML;
+
             } catch (error) {
                 console.error("Error al obtener datos del cliente:", error);
             }
@@ -163,12 +151,9 @@
             try {
                 const response = await fetch(url);
                 const productos = await response.json();
-
                 let resumenHTML = "";
-                productosDisponibles = false;
 
                 if (productos.lineas_moviles && Object.keys(productos.lineas_moviles).length > 0) {
-                    productosDisponibles = true;
                     resumenHTML += `<h4>Líneas Móviles</h4><ul>`;
                     Object.values(productos.lineas_moviles).forEach(linea => {
                         resumenHTML += `
@@ -185,7 +170,6 @@
                 }
 
                 if (productos.servicios_adicionales && Object.keys(productos.servicios_adicionales).length > 0) {
-                    productosDisponibles = true;
                     resumenHTML += `<h4>Servicios Adicionales</h4><ul>`;
                     Object.values(productos.servicios_adicionales).forEach(servicio => {
                         resumenHTML += `
@@ -201,7 +185,6 @@
                 }
 
                 if (productos.internet && Object.keys(productos.internet).length > 0) {
-                    productosDisponibles = true;
                     resumenHTML += `<h4>Internet</h4><ul>`;
                     Object.values(productos.internet).forEach(internet => {
                         resumenHTML += `
@@ -217,7 +200,6 @@
                 }
 
                 if (productos.fijos && Object.keys(productos.fijos).length > 0) {
-                    productosDisponibles = true;
                     resumenHTML += `<h4>Fijos</h4><ul>`;
                     Object.values(productos.fijos).forEach(fijo => {
                         resumenHTML += `
@@ -232,33 +214,14 @@
                     resumenHTML += `</ul>`;
                 }
 
-                document.getElementById("productosResumen").innerHTML = resumenHTML || "<p>No hay productos contratados.</p>";
+                document.getElementById(`productosResumen_${id}`).innerHTML = resumenHTML || "<p>No hay productos contratados.</p>";
             } catch (error) {
                 console.error("Error al obtener productos:", error);
             }
         }
 
         function confirmarBaja() {
-            const email = document.getElementById("email").value;
-            if (!productosDisponibles) {
-                Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: "No puedes dar de baja a un cliente sin productos."
-                });
-                return;
-            }
-
-            if (email === "No disponible") {
-                Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: "El cliente no tiene un email registrado."
-                });
-                return;
-            }
-
-            const productosSeleccionados = document.querySelectorAll("#productosResumen .form-check-input:checked");
+            const productosSeleccionados = document.querySelectorAll(".form-check-input:checked");
             if (productosSeleccionados.length === 0) {
                 Swal.fire({
                     icon: "warning",
@@ -268,7 +231,18 @@
                 return;
             }
 
-            generarPDF(productosSeleccionados);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFont("times", "normal");
+
+            let y = 20;
+            productosSeleccionados.forEach((input) => {
+                const info = input.getAttribute("data-info");
+                doc.text(`- ${info}`, 10, y);
+                y += 10;
+            });
+
+            doc.save("Resumen_Baja_Cliente.pdf");
         }
 
         obtenerDatosCliente(clienteDNI);
