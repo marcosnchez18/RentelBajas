@@ -5,68 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumen del Cliente</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin-top: 2rem;
+        }
+        h2, h3 {
+            color: #34495e;
+        }
+        .card {
+            background-color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+        }
+        .form-group label {
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+        .form-control {
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+        }
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+            transition: background-color 0.3s ease;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        h4 {
+            color: #000;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        li {
+            padding: 0.75rem 1rem;
+            background-color: #ecf0f1;
+            margin-bottom: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            color: #34495e;
+        }
+        li label {
+            font-weight: normal;
+            color: #34495e;
+        }
+        .product-title {
+            font-weight: bold;
+            color: #000;
+        }
+        .product-info {
+            font-style: italic;
+            color: #555;
+        }
+        .form-check-input {
+            margin-right: 10px;
+        }
+        .text-center {
+            margin-top: 2rem;
+            font-weight: 600;
+            color: black;
+        }
+    </style>
 </head>
 <body>
-    <!-- Barra de navegación superior -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">
-            <img src="../img/logo.png" alt="Logo" style="width: 50px;">
-        </a>
-        <div class="ml-auto">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="search.html">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Sobre nosotros</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Contacto</a>
-                </li>
-            </ul>
+    <div class="container">
+        <h2 class="text-center">Resumen del Cliente</h2>
+        <div class="card">
+            <form id="clienteForm">
+                <div class="form-group">
+                    <label for="dni">DNI:</label>
+                    <input type="text" class="form-control" id="dni" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" class="form-control" id="nombre" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" class="form-control" id="email">
+                </div>
+                <div class="form-group">
+                    <label for="telefono">Teléfono Fijo:</label>
+                    <input type="text" class="form-control" id="telefonofijo" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="movil">Teléfono Móvil:</label>
+                    <input type="text" class="form-control" id="telefonomovil" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="direccion">Dirección:</label>
+                    <input type="text" class="form-control" id="direccion" disabled>
+                </div>
+            </form>
         </div>
-    </nav>
 
-    <div class="container mt-5">
-        <h2>Resumen del Cliente</h2>
-        <form id="clienteForm">
-            <div class="form-group">
-                <label for="dni">DNI:</label>
-                <input type="text" class="form-control" id="dni" disabled>
-            </div>
-            <div class="form-group">
-                <label for="nombre">Nombre:</label>
-                <input type="text" class="form-control" id="nombre" disabled>
-            </div>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" class="form-control" id="email">
-            </div>
-            <div class="form-group">
-                <label for="telefono">Teléfono Fijo:</label>
-                <input type="text" class="form-control" id="telefonofijo" disabled>
-            </div>
-            <div class="form-group">
-                <label for="movil">Teléfono Móvil:</label>
-                <input type="text" class="form-control" id="telefonomovil" disabled>
-            </div>
-            <div class="form-group">
-                <label for="direccion">Dirección:</label>
-                <input type="text" class="form-control" id="direccion" disabled>
-            </div>
+        <h3 class="text-center">Productos Contratados</h3>
+        <div id="productosResumen" class="card"></div>
 
-            <h3 class="mt-5">Productos Contratados</h3>
-            <div id="productosResumen"></div>
-
-            <div class="text-center mt-4">
-                <button type="submit" class="btn btn-success">Confirmar</button>
-            </div>
-        </form>
+        <div class="text-center">
+            <button type="button" class="btn btn-success" onclick="confirmarBaja()">Confirmar</button>
+        </div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const clienteDNI = urlParams.get('dni');
+        let productosDisponibles = false;
 
         async function obtenerDatosCliente(dni) {
             try {
@@ -83,7 +144,6 @@
                 }
 
                 const cliente = data[0];
-
                 document.getElementById("dni").value = cliente.dni;
                 document.getElementById("nombre").value = cliente.nombre;
                 document.getElementById("email").value = cliente.email || "No disponible";
@@ -105,80 +165,110 @@
                 const productos = await response.json();
 
                 let resumenHTML = "";
+                productosDisponibles = false;
 
-                // Líneas Móviles
                 if (productos.lineas_moviles && Object.keys(productos.lineas_moviles).length > 0) {
+                    productosDisponibles = true;
                     resumenHTML += `<h4>Líneas Móviles</h4><ul>`;
                     Object.values(productos.lineas_moviles).forEach(linea => {
                         resumenHTML += `
                             <li>
-                                <input type="checkbox" class="form-check-input" id="movil_${linea.ID}">
-                                <label for="movil_${linea.ID}" class="form-check-label">
-                                    <strong>Número:</strong> ${linea.DDI}, 
-                                    <strong>Tarifa:</strong> ${linea.NomTarifa}, 
-                                    <strong>Operador:</strong> ${linea.Operador},
-                                    <strong>Precio:</strong> ${linea.PvpCuotaTarifa}€, 
-                                    <strong>Descripción:</strong> ${linea.Descripcion}, 
-                                    <strong>Fecha Alta:</strong> ${linea.FechaAlta}
+                                <input type="checkbox" class="form-check-input" id="movil_${linea.ID}" data-info="Número: ${linea.DDI}, Tarifa: ${linea.NomTarifa}, Precio: ${linea.PvpCuotaTarifa}€">
+                                <label for="movil_${linea.ID}">
+                                    <span class="product-title">Número:</span> ${linea.DDI} <br>
+                                    <span class="product-title">Tarifa:</span> <span class="product-info">${linea.NomTarifa}</span> <br>
+                                    <span class="product-title">Precio:</span> <span class="product-info">${linea.PvpCuotaTarifa}€</span>
                                 </label>
                             </li>`;
                     });
                     resumenHTML += `</ul>`;
                 }
 
-                // Servicios Adicionales
                 if (productos.servicios_adicionales && Object.keys(productos.servicios_adicionales).length > 0) {
+                    productosDisponibles = true;
                     resumenHTML += `<h4>Servicios Adicionales</h4><ul>`;
                     Object.values(productos.servicios_adicionales).forEach(servicio => {
                         resumenHTML += `
                             <li>
-                                <input type="checkbox" class="form-check-input" id="servicio_${servicio.ID}">
-                                <label for="servicio_${servicio.ID}" class="form-check-label">
-                                    <strong>Descripción:</strong> ${servicio.Descripcion}, 
-                                    <strong>Precio:</strong> ${servicio.Precio}€, 
-                                    <strong>Referencia:</strong> ${servicio.Referencia}
+                                <input type="checkbox" class="form-check-input" id="servicio_${servicio.ID}" data-info="Descripción: ${servicio.Descripcion}, Precio: ${servicio.Precio}€">
+                                <label for="servicio_${servicio.ID}">
+                                    <span class="product-title">Descripción:</span> <span class="product-info">${servicio.Descripcion}</span> <br>
+                                    <span class="product-title">Precio:</span> <span class="product-info">${servicio.Precio}€</span>
                                 </label>
                             </li>`;
                     });
                     resumenHTML += `</ul>`;
                 }
 
-                // Fijos
-                if (productos.fijos && Object.keys(productos.fijos).length > 0) {
-                    resumenHTML += `<h4>Fijos</h4><ul>`;
-                    Object.values(productos.fijos).forEach(fijo => {
-                        resumenHTML += `
-                            <li>
-                                <input type="checkbox" class="form-check-input" id="fijo_${fijo.ID}">
-                                <label for="fijo_${fijo.ID}" class="form-check-label">
-                                    <strong>Número:</strong> ${fijo.DDI}, 
-                                    <strong>Precio con IVA:</strong> ${fijo.PrecioConIva}€
-                                </label>
-                            </li>`;
-                    });
-                    resumenHTML += `</ul>`;
-                }
-
-                // Internet
                 if (productos.internet && Object.keys(productos.internet).length > 0) {
+                    productosDisponibles = true;
                     resumenHTML += `<h4>Internet</h4><ul>`;
                     Object.values(productos.internet).forEach(internet => {
                         resumenHTML += `
                             <li>
-                                <input type="checkbox" class="form-check-input" id="internet_${internet.ID}">
-                                <label for="internet_${internet.ID}" class="form-check-label">
-                                    <strong>Descripción:</strong> ${internet.Descripcion}, 
-                                    <strong>Precio:</strong> ${internet.PVPConIva}€
+                                <input type="checkbox" class="form-check-input" id="internet_${internet.ID}" data-info="Descripción: ${internet.Descripcion}, Precio: ${internet.PVPConIva}€">
+                                <label for="internet_${internet.ID}">
+                                    <span class="product-title">Descripción:</span> <span class="product-info">${internet.Descripcion}</span> <br>
+                                    <span class="product-title">Precio:</span> <span class="product-info">${internet.PVPConIva}€</span>
                                 </label>
                             </li>`;
                     });
                     resumenHTML += `</ul>`;
                 }
 
-                document.getElementById("productosResumen").innerHTML = resumenHTML || "<p>No tiene productos contratados.</p>";
+                if (productos.fijos && Object.keys(productos.fijos).length > 0) {
+                    productosDisponibles = true;
+                    resumenHTML += `<h4>Fijos</h4><ul>`;
+                    Object.values(productos.fijos).forEach(fijo => {
+                        resumenHTML += `
+                            <li>
+                                <input type="checkbox" class="form-check-input" id="fijo_${fijo.ID}" data-info="Número: ${fijo.DDI}, Precio con IVA: ${fijo.PrecioConIva}€">
+                                <label for="fijo_${fijo.ID}">
+                                    <span class="product-title">Número:</span> ${fijo.DDI} <br>
+                                    <span class="product-title">Precio con IVA:</span> <span class="product-info">${fijo.PrecioConIva}€</span>
+                                </label>
+                            </li>`;
+                    });
+                    resumenHTML += `</ul>`;
+                }
+
+                document.getElementById("productosResumen").innerHTML = resumenHTML || "<p>No hay productos contratados.</p>";
             } catch (error) {
                 console.error("Error al obtener productos:", error);
             }
+        }
+
+        function confirmarBaja() {
+            const email = document.getElementById("email").value;
+            if (!productosDisponibles) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "No puedes dar de baja a un cliente sin productos."
+                });
+                return;
+            }
+
+            if (email === "No disponible") {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "El cliente no tiene un email registrado."
+                });
+                return;
+            }
+
+            const productosSeleccionados = document.querySelectorAll("#productosResumen .form-check-input:checked");
+            if (productosSeleccionados.length === 0) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Advertencia",
+                    text: "No has seleccionado ningún producto para dar de baja."
+                });
+                return;
+            }
+
+            generarPDF(productosSeleccionados);
         }
 
         obtenerDatosCliente(clienteDNI);
