@@ -6,11 +6,13 @@ from correo import enviar_correo_confirmacion
 
 app = FastAPI()
 
-
+# Almacena los datos seleccionados por el cliente en un diccionario temporal
 datos_seleccionados = {}
 
-
+# Monta la carpeta de archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Configuración de plantillas
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
@@ -27,19 +29,22 @@ async def confirmar_baja(request: Request):
     email_cliente = data.get("email")
     productos = data.get("productos", [])
     cuenta_id = str(data.get("cuenta_id"))
-
-    # Datos
     nombre_cliente = data.get("nombre")
     direccion_cliente = data.get("direccion")
     telefono_cliente = data.get("telefono")
 
+    # Validación de datos recibidos
     if not email_cliente or not productos or not cuenta_id:
         raise HTTPException(status_code=400, detail="Datos incompletos")
 
+    if email_cliente == "No disponible":
+        raise HTTPException(status_code=400, detail="Correo no disponible, proporcione el DNI.")
+
+    # Enlace de confirmación
     enlace_confirmacion = f"http://localhost:8000/confirmacion?id={cuenta_id}"
     enviar_correo_confirmacion(email_cliente, enlace_confirmacion)
 
-    # datos del cliente y productos seleccionados
+    # Guardar datos del cliente y productos seleccionados
     datos_seleccionados[cuenta_id] = {
         "email": email_cliente,
         "productos": productos,
