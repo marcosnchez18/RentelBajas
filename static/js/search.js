@@ -46,6 +46,11 @@ function mostrarClientes(clientes) {
             </div>
         `;
 
+        // Cuadro rojo pequeño si tiene facturas pendientes
+        const facturasPendientesHTML = cliente.NFacPendientes && cliente.NFacPendientes > 0 
+            ? `<span class="bg-red-500 text-white px-1 py-0.5 text-xs rounded-full inline-block">${cliente.NFacPendientes}</span>`
+            : cliente.NFacPendientes || 0;
+
         const row = `
             <tr data-id="${cliente.id}" class="cursor-pointer hover:bg-gray-100 cliente-row">
                 <td class="border px-4 py-2">${cliente.dni}</td>
@@ -54,7 +59,7 @@ function mostrarClientes(clientes) {
                 <td class="border px-4 py-2">${cliente.telefonofijo}</td>
                 <td class="border px-4 py-2">${cliente.telefonomovil}</td>
                 <td class="border px-4 py-2 text-left whitespace-nowrap">${cliente.direccion}, ${cliente.poblacion}, ${cliente.codpostal}</td>
-                <td class="border px-4 py-2">${cliente.NFacPendientes || 0}</td>
+                <td class="border px-4 py-2">${facturasPendientesHTML}</td>
                 <td class="border px-4 py-2">${productosContratados}</td>
                 <td class="border px-4 py-2">${cliente.Baja ? "Baja" : "Alta"}</td>
                 <td class="border px-4 py-2 whitespace-nowrap">${cliente.fechaFin}</td>
@@ -63,19 +68,28 @@ function mostrarClientes(clientes) {
         clienteTableBody.innerHTML += row;
     });
 
-    // Agrega el evento a cada fila
     document.querySelectorAll('.cliente-row').forEach(row => {
         row.addEventListener('click', function() {
             const clienteId = this.getAttribute('data-id');
             const cliente = clientes.find(c => c.id === parseInt(clienteId));
 
             if (cliente) {
-                // Guarda el cliente en localStorage
                 localStorage.setItem('clienteSeleccionado', JSON.stringify(cliente));
-                
-                // Redirige a la página de detalles del cliente
-                window.location.href = `cliente_formulario.html?id=${clienteId}`;
+                window.location.href = `/cliente_formulario?id=${clienteId}`;
             }
         });
     });
 }
+
+
+    document.querySelectorAll('.cliente-row').forEach(row => {
+        row.addEventListener('click', function() {
+            const clienteId = this.getAttribute('data-id');
+            const cliente = clientes.find(c => c.id === parseInt(clienteId));
+
+            if (cliente) {
+                localStorage.setItem('clienteSeleccionado', JSON.stringify(cliente));
+                window.location.href = `/cliente_formulario?id=${clienteId}`;
+            }
+        });
+    });
