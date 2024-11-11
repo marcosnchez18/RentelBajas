@@ -6,10 +6,10 @@ from correo import enviar_correo_confirmacion
 
 app = FastAPI()
 
-# Diccionario para almacenar datos temporalmente
+
 datos_seleccionados = {}
 
-# Configuración de rutas
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -28,7 +28,7 @@ async def confirmar_baja(request: Request):
     productos = data.get("productos", [])
     cuenta_id = str(data.get("cuenta_id"))
 
-    # Datos adicionales del cliente
+    # Datos
     nombre_cliente = data.get("nombre")
     direccion_cliente = data.get("direccion")
     telefono_cliente = data.get("telefono")
@@ -39,7 +39,7 @@ async def confirmar_baja(request: Request):
     enlace_confirmacion = f"http://localhost:8000/confirmacion?id={cuenta_id}"
     enviar_correo_confirmacion(email_cliente, enlace_confirmacion)
 
-    # Guardar todos los datos del cliente y productos seleccionados
+    # datos del cliente y productos seleccionados
     datos_seleccionados[cuenta_id] = {
         "email": email_cliente,
         "productos": productos,

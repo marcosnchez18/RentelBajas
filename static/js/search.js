@@ -46,7 +46,7 @@ function mostrarClientes(clientes) {
             </div>
         `;
 
-        // Cuadro rojo pequeño si tiene facturas pendientes
+        
         const facturasPendientesHTML = cliente.NFacPendientes && cliente.NFacPendientes > 0 
             ? `<span class="bg-red-500 text-white px-1 py-0.5 text-xs rounded-full inline-block">${cliente.NFacPendientes}</span>`
             : cliente.NFacPendientes || 0;
