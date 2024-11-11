@@ -5,247 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumen del Cliente</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <style>
-        body {
-            background-color: #f4f6f9;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            max-width: 900px;
-            margin-top: 2rem;
-        }
-        h2, h3, h4 {
-            color: #34495e;
-        }
-        .card {
-            background-color: #ffffff;
-            border: none;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            padding: 1.5rem;
-        }
-        .form-group label {
-            color: #7f8c8d;
-            font-weight: bold;
-        }
-        .form-control {
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-        }
-        .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
-            transition: background-color 0.3s ease;
-        }
-        .btn-success:hover {
-            background-color: #218838;
-            border-color: #1e7e34;
-        }
-        ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        li {
-            padding: 0.75rem 1rem;
-            background-color: #ecf0f1;
-            margin-bottom: 0.5rem;
-            border-radius: 5px;
-            font-size: 0.95rem;
-            color: #34495e;
-        }
-        .product-title {
-            font-weight: bold;
-            color: #000;
-        }
-        .product-info {
-            font-style: italic;
-            color: #555;
-        }
-        .form-check-input {
-            margin-right: 10px;
-        }
-        .text-center {
-            margin-top: 2rem;
-            font-weight: 600;
-            color: black;
-        }
+        body { background-color: #f4f6f9; font-family: Arial, sans-serif; }
+        .container { max-width: 900px; margin-top: 2rem; }
+        h2 { color: #34495e; }
+        .card { background-color: #ffffff; border: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); border-radius: 8px; margin-bottom: 1.5rem; padding: 1.5rem; }
+        .form-group label { color: #7f8c8d; font-weight: bold; }
+        .form-check-input { margin-right: 10px; }
+        ul { list-style-type: none; padding-left: 0; }
+        li { padding: 0.75rem 1rem; background-color: #ecf0f1; margin-bottom: 0.5rem; border-radius: 5px; color: #34495e; }
+        .product-title { font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2 class="text-center">Resumen del Cliente</h2>
-        <div id="cuentasResumen"></div>
-        <div class="text-center">
-            <button type="button" class="btn btn-success" onclick="confirmarBaja()">Confirmar</button>
+
+        <!-- Información del Cliente -->
+        <div id="clienteInfo" class="card">
+            <form>
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo:</label>
+                    <input type="text" class="form-control" id="nombre" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="dni">DNI:</label>
+                    <input type="text" class="form-control" id="dni" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" class="form-control" id="email" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="telefonofijo">Teléfono Fijo:</label>
+                    <input type="text" class="form-control" id="telefonofijo" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="telefonomovil">Teléfono Móvil:</label>
+                    <input type="text" class="form-control" id="telefonomovil" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="direccion">Dirección:</label>
+                    <input type="text" class="form-control" id="direccion" disabled>
+                </div>
+            </form>
         </div>
+
+        <!-- Productos del Cliente -->
+        <div id="cuentasResumen"></div>
+        <div class="text-center"><button class="btn btn-success" onclick="confirmarBaja()">Confirmar</button></div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const clienteDNI = urlParams.get('dni');
+        const cuentaID = urlParams.get('id');
 
-        async function obtenerDatosCliente(dni) {
-            try {
-                const response = await fetch("http://10.58.6.89:8082/get_data_client_baja_for_dni", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ dni: dni })
-                });
-                const data = await response.json();
+        // Cargar información del cliente desde localStorage
+        const clienteSeleccionado = JSON.parse(localStorage.getItem('clienteSeleccionado'));
 
-                if (!data || data.length === 0) {
-                    document.getElementById("cuentasResumen").innerHTML = "<p>Error: Cliente no encontrado.</p>";
-                    return;
-                }
-
-                let cuentasHTML = "";
-                data.forEach((cuenta, index) => {
-                    const cuentaLabel = data.length > 1 ? `<h4>Cuenta ${index + 1}</h4>` : '';
-                    cuentasHTML += `
-                        <div class="card">
-                            ${cuentaLabel}
-                            <form id="clienteForm_${cuenta.id}">
-                                <div class="form-group">
-                                    <label for="dni">DNI:</label>
-                                    <input type="text" class="form-control" value="${cuenta.dni}" disabled>
-                                </div>
-                                <div class="form-group">
-                                    <label for="nombre">Nombre:</label>
-                                    <input type="text" class="form-control" value="${cuenta.nombre}" disabled>
-                                </div>
-                                <div class="form-group">
-                                    <label for="email">Email:</label>
-                                    <input type="email" class="form-control" value="${cuenta.email || 'No disponible'}">
-                                </div>
-                                <div class="form-group">
-                                    <label for="telefonofijo">Teléfono Fijo:</label>
-                                    <input type="text" class="form-control" value="${cuenta.telefonofijo}" disabled>
-                                </div>
-                                <div class="form-group">
-                                    <label for="telefonomovil">Teléfono Móvil:</label>
-                                    <input type="text" class="form-control" value="${cuenta.telefonomovil}" disabled>
-                                </div>
-                                <div class="form-group">
-                                    <label for="direccion">Dirección:</label>
-                                    <input type="text" class="form-control" value="${cuenta.direccion}, ${cuenta.poblacion}, ${cuenta.codpostal}" disabled>
-                                </div>
-                                <div id="productosResumen_${cuenta.id}"></div>
-                            </form>
-                        </div>`;
-                    obtenerResumenProductos(cuenta.id);
-                });
-
-                document.getElementById("cuentasResumen").innerHTML = cuentasHTML;
-
-            } catch (error) {
-                console.error("Error al obtener datos del cliente:", error);
-            }
+        if (clienteSeleccionado) {
+            document.getElementById("nombre").value = clienteSeleccionado.nombre;
+            document.getElementById("dni").value = clienteSeleccionado.dni;
+            document.getElementById("email").value = clienteSeleccionado.email || "No disponible";
+            document.getElementById("telefonofijo").value = clienteSeleccionado.telefonofijo;
+            document.getElementById("telefonomovil").value = clienteSeleccionado.telefonomovil;
+            document.getElementById("direccion").value = `${clienteSeleccionado.direccion}, ${clienteSeleccionado.poblacion}, ${clienteSeleccionado.codpostal}`;
+        } else {
+            document.getElementById("clienteInfo").innerHTML = "<p>Error: Cliente no encontrado.</p>";
         }
 
-        async function obtenerResumenProductos(id) {
-            const url = `http://10.58.6.89:8082/cliente/${id}/products`;
-
+        // Obtener los productos del cliente por ID específico de cuenta
+        async function obtenerProductos(id) {
             try {
-                const response = await fetch(url);
+                const response = await fetch(`http://10.58.6.89:8082/cliente/${id}/products`);
                 const productos = await response.json();
-                let resumenHTML = "";
+                let productosHTML = "";
 
                 if (productos.lineas_moviles && Object.keys(productos.lineas_moviles).length > 0) {
-                    resumenHTML += `<h4>Líneas Móviles</h4><ul>`;
+                    productosHTML += `<h4>Líneas Móviles</h4><ul>`;
                     Object.values(productos.lineas_moviles).forEach(linea => {
-                        resumenHTML += `
-                            <li>
-                                <input type="checkbox" class="form-check-input" id="movil_${linea.ID}" data-info="Número: ${linea.DDI}, Tarifa: ${linea.NomTarifa}, Precio: ${linea.PvpCuotaTarifa}€">
-                                <label for="movil_${linea.ID}">
-                                    <span class="product-title">Número:</span> ${linea.DDI} <br>
-                                    <span class="product-title">Tarifa:</span> <span class="product-info">${linea.NomTarifa}</span> <br>
-                                    <span class="product-title">Precio:</span> <span class="product-info">${linea.PvpCuotaTarifa}€</span>
-                                </label>
-                            </li>`;
+                        productosHTML += `<li><input type="checkbox" class="form-check-input"> 
+                            <span class="product-title">Número:</span> ${linea.DDI}, 
+                            <span class="product-title">Tarifa:</span> ${linea.NomTarifa}, 
+                            <span class="product-title">Precio:</span> ${linea.PvpCuotaTarifa}€
+                        </li>`;
                     });
-                    resumenHTML += `</ul>`;
+                    productosHTML += `</ul>`;
                 }
 
                 if (productos.servicios_adicionales && Object.keys(productos.servicios_adicionales).length > 0) {
-                    resumenHTML += `<h4>Servicios Adicionales</h4><ul>`;
+                    productosHTML += `<h4>Servicios Adicionales</h4><ul>`;
                     Object.values(productos.servicios_adicionales).forEach(servicio => {
-                        resumenHTML += `
-                            <li>
-                                <input type="checkbox" class="form-check-input" id="servicio_${servicio.ID}" data-info="Descripción: ${servicio.Descripcion}, Precio: ${servicio.Precio}€">
-                                <label for="servicio_${servicio.ID}">
-                                    <span class="product-title">Descripción:</span> <span class="product-info">${servicio.Descripcion}</span> <br>
-                                    <span class="product-title">Precio:</span> <span class="product-info">${servicio.Precio}€</span>
-                                </label>
-                            </li>`;
+                        productosHTML += `<li><input type="checkbox" class="form-check-input"> 
+                            <span class="product-title">Descripción:</span> ${servicio.Descripcion}, 
+                            <span class="product-title">Precio:</span> ${servicio.Precio}€
+                        </li>`;
                     });
-                    resumenHTML += `</ul>`;
+                    productosHTML += `</ul>`;
                 }
 
-                if (productos.internet && Object.keys(productos.internet).length > 0) {
-                    resumenHTML += `<h4>Internet</h4><ul>`;
-                    Object.values(productos.internet).forEach(internet => {
-                        resumenHTML += `
-                            <li>
-                                <input type="checkbox" class="form-check-input" id="internet_${internet.ID}" data-info="Descripción: ${internet.Descripcion}, Precio: ${internet.PVPConIva}€">
-                                <label for="internet_${internet.ID}">
-                                    <span class="product-title">Descripción:</span> <span class="product-info">${internet.Descripcion}</span> <br>
-                                    <span class="product-title">Precio:</span> <span class="product-info">${internet.PVPConIva}€</span>
-                                </label>
-                            </li>`;
-                    });
-                    resumenHTML += `</ul>`;
-                }
-
-                if (productos.fijos && Object.keys(productos.fijos).length > 0) {
-                    resumenHTML += `<h4>Fijos</h4><ul>`;
-                    Object.values(productos.fijos).forEach(fijo => {
-                        resumenHTML += `
-                            <li>
-                                <input type="checkbox" class="form-check-input" id="fijo_${fijo.ID}" data-info="Número: ${fijo.DDI}, Precio con IVA: ${fijo.PrecioConIva}€">
-                                <label for="fijo_${fijo.ID}">
-                                    <span class="product-title">Número:</span> ${fijo.DDI} <br>
-                                    <span class="product-title">Precio con IVA:</span> <span class="product-info">${fijo.PrecioConIva}€</span>
-                                </label>
-                            </li>`;
-                    });
-                    resumenHTML += `</ul>`;
-                }
-
-                document.getElementById(`productosResumen_${id}`).innerHTML = resumenHTML || "<p>No hay productos contratados.</p>";
+                document.getElementById("cuentasResumen").innerHTML = productosHTML || "<p>No hay productos contratados.</p>";
             } catch (error) {
                 console.error("Error al obtener productos:", error);
             }
         }
 
-        function confirmarBaja() {
-            const productosSeleccionados = document.querySelectorAll(".form-check-input:checked");
-            if (productosSeleccionados.length === 0) {
-                Swal.fire({
-                    icon: "warning",
-                    title: "Advertencia",
-                    text: "No has seleccionado ningún producto para dar de baja."
-                });
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFont("times", "normal");
-
-            let y = 20;
-            productosSeleccionados.forEach((input) => {
-                const info = input.getAttribute("data-info");
-                doc.text(`- ${info}`, 10, y);
-                y += 10;
-            });
-
-            doc.save("Resumen_Baja_Cliente.pdf");
-        }
-
-        obtenerDatosCliente(clienteDNI);
+        obtenerProductos(cuentaID);
     </script>
 </body>
 </html>

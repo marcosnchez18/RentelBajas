@@ -1,7 +1,7 @@
 import requests
 
 
-url = "http://10.58.6.89:8082/cliente/103728/products"
+url = "http://10.58.6.89:8082/cliente/110655/products"
 
 try:
   
