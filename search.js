@@ -49,15 +49,15 @@ function mostrarClientes(clientes) {
         const row = `
             <tr data-id="${cliente.id}" class="cursor-pointer hover:bg-gray-100 cliente-row">
                 <td class="border px-4 py-2">${cliente.dni}</td>
-                <td class="border px-4 py-2 text-left">${cliente.nombre}</td>
+                <td class="border px-4 py-2 text-left whitespace-nowrap">${cliente.nombre}</td>
                 <td class="border px-4 py-2 text-left">${cliente.email || "No disponible"}</td>
                 <td class="border px-4 py-2">${cliente.telefonofijo}</td>
                 <td class="border px-4 py-2">${cliente.telefonomovil}</td>
-                <td class="border px-4 py-2 text-left">${cliente.direccion}, ${cliente.poblacion}, ${cliente.codpostal}</td>
+                <td class="border px-4 py-2 text-left whitespace-nowrap">${cliente.direccion}, ${cliente.poblacion}, ${cliente.codpostal}</td>
                 <td class="border px-4 py-2">${cliente.NFacPendientes || 0}</td>
                 <td class="border px-4 py-2">${productosContratados}</td>
                 <td class="border px-4 py-2">${cliente.Baja ? "Baja" : "Alta"}</td>
-                <td class="border px-4 py-2">${cliente.fechaFin}</td>
+                <td class="border px-4 py-2 whitespace-nowrap">${cliente.fechaFin}</td>
             </tr>
         `;
         clienteTableBody.innerHTML += row;

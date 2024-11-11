@@ -4,7 +4,7 @@ import requests
 url = "http://10.58.6.89:8082/get_data_client_baja_for_dni"
 
 
-dni = "49342800A"  
+dni = "47208020Z"  
 
 
 data = {
