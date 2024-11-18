@@ -1,10 +1,10 @@
 import requests
 
 
-url = "http://10.58.6.89:8082/get_data_client_baja_for_dni"
+url = "http://10.58.6.89:8082/get_data_client_name_dni"
 
 
-dni = "47208020Z"  
+dni = "52322185z"  
 
 
 data = {

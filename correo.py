@@ -1,7 +1,18 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+from itsdangerous import URLSafeTimedSerializer
 
+# Configuración del token
+SECRET_KEY = "clave_secreta_unica_para_tu_aplicacion"
+serializer = URLSafeTimedSerializer(SECRET_KEY)
+
+# Función para generar un enlace con token
+def generar_enlace(email_cliente, cuenta_id):
+    token = serializer.dumps({"email": email_cliente, "cuenta_id": cuenta_id})
+    return f"http://localhost:8000/confirmacion?token={token}"
+
+# Enviar correo
 def enviar_correo_confirmacion(email_cliente, enlace_confirmacion):
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
@@ -13,10 +24,6 @@ def enviar_correo_confirmacion(email_cliente, enlace_confirmacion):
     mensaje["To"] = email_cliente
     mensaje["Subject"] = "Confirmación de Baja de Productos"
 
-    
-    body_text = "Para confirmar la baja, haga clic en el siguiente enlace."
-
-    
     body_html = f"""
     <html>
         <body style="font-family: Arial, sans-serif; font-size: 16px; color: #333;">
@@ -27,9 +34,6 @@ def enviar_correo_confirmacion(email_cliente, enlace_confirmacion):
         </body>
     </html>
     """
-
-    
-    mensaje.attach(MIMEText(body_text, "plain"))
     mensaje.attach(MIMEText(body_html, "html"))
 
     try:
@@ -40,3 +44,11 @@ def enviar_correo_confirmacion(email_cliente, enlace_confirmacion):
             print("Correo enviado correctamente a:", email_cliente)
     except Exception as e:
         print("Error al enviar el correo:", e)
+
+# Función para verificar el token
+def verificar_token(token, max_age=86400):
+    try:
+        data = serializer.loads(token, max_age=max_age)
+        return data
+    except Exception:
+        return None
