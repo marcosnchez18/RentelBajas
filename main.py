@@ -3,6 +3,16 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from correo import enviar_correo_confirmacion, generar_enlace, verificar_token
+import mariadb
+
+# Configuración de la base de datos
+DB_CONFIG = {
+    "user": "bajas",
+    "password": "bajas",
+    "host": "localhost",
+    "port": 3306,
+    "database": "bajas"
+}
 
 app = FastAPI()
 
@@ -15,13 +25,45 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Plantillas
 templates = Jinja2Templates(directory="templates")
 
+
+def insertar_en_bbdd(datos):
+    """Inserta los datos del cliente en la tabla `bajas`."""
+    try:
+        connection = mariadb.connect(**DB_CONFIG)
+        cursor = connection.cursor()
+
+        query = """
+        INSERT INTO bajas (id_cliente, lineas_moviles, servicios_adicionales, internet, fijos, fecha_baja) 
+        VALUES (?, ?, ?, ?, ?, NOW())
+        """
+        cursor.execute(
+            query,
+            (
+                datos["id_cliente"],
+                datos.get("lineas_moviles", ""),
+                datos.get("servicios_adicionales", ""),
+                datos.get("internet", ""),
+                datos.get("fijos", "")
+            ),
+        )
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return True
+    except mariadb.Error as e:
+        print(f"Error al insertar en la base de datos: {e}")
+        return False
+
+
 @app.get("/", response_class=HTMLResponse)
 async def mostrar_busqueda(request: Request):
     return templates.TemplateResponse("search.html", {"request": request})
 
+
 @app.get("/cliente_formulario", response_class=HTMLResponse)
 async def mostrar_cliente_formulario(request: Request, id: int):
     return templates.TemplateResponse("cliente_formulario.html", {"request": request, "id": id})
+
 
 @app.post("/confirmar_baja")
 async def confirmar_baja(request: Request):
@@ -44,6 +86,7 @@ async def confirmar_baja(request: Request):
 
     # Guardar datos del cliente y productos seleccionados
     datos_seleccionados[cuenta_id] = {
+        "id_cliente": cuenta_id,
         "email": email_cliente,
         "productos": productos,
         "nombre": nombre_cliente,
@@ -53,6 +96,7 @@ async def confirmar_baja(request: Request):
 
     print("Datos seleccionados guardados:", datos_seleccionados)
     return {"message": "Correo de confirmación enviado"}
+
 
 @app.get("/confirmacion", response_class=HTMLResponse)
 async def confirmar_seleccion(request: Request, token: str = Query(...)):
@@ -64,6 +108,25 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
     datos_cliente = datos_seleccionados.get(cuenta_id)
     if not datos_cliente:
         raise HTTPException(status_code=404, detail="Datos no encontrados")
+
+    # Preparar los datos para la tabla bajas
+    lineas_moviles = [prod for prod in datos_cliente["productos"] if "Número:" in prod]
+    servicios_adicionales = [prod for prod in datos_cliente["productos"] if "Descripción:" in prod]
+    internet = [prod for prod in datos_cliente["productos"] if "Fibra" in prod]
+    fijos = [prod for prod in datos_cliente["productos"] if "Fijo" in prod]
+
+    datos_a_insertar = {
+        "id_cliente": cuenta_id,
+        "lineas_moviles": ", ".join(lineas_moviles),
+        "servicios_adicionales": ", ".join(servicios_adicionales),
+        "internet": ", ".join(internet),
+        "fijos": ", ".join(fijos)
+    }
+
+    if insertar_en_bbdd(datos_a_insertar):
+        print(f"Datos insertados correctamente para el cliente {cuenta_id}.")
+    else:
+        raise HTTPException(status_code=500, detail="Error al guardar los datos en la base de datos.")
 
     return templates.TemplateResponse("confirmacion.html", {
         "request": request,
@@ -80,6 +143,7 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
 async def mostrar_promociones(request: Request):
     return templates.TemplateResponse("search_datos.html", {"request": request})
 
+
 @app.get("/cliente_promociones", response_class=HTMLResponse)
 async def cliente_promociones(request: Request, id: int):
     return templates.TemplateResponse("cliente_promociones.html", {"request": request, "id": id})
@@ -87,7 +151,6 @@ async def cliente_promociones(request: Request, id: int):
 
 @app.get("/get_mobile_phones_promotions")
 async def obtener_promociones():
-    # Simulación de datos de ejemplo
     promociones = {
         "datas_article": [
             {"descripcion": "Equipo USB SMC con Conector"},
