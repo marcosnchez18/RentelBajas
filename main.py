@@ -34,13 +34,14 @@ def insertar_en_bbdd(datos):
         cursor = connection.cursor()
 
         query = """
-        INSERT INTO bajas (id_cliente, lineas_moviles, servicios_adicionales, fecha_baja) 
-        VALUES (?, ?, ?, NOW())
+        INSERT INTO bajas (id_cliente, email, lineas_moviles, servicios_adicionales, fecha_baja) 
+        VALUES (?, ?, ?, ?, NOW())
         """
         cursor.execute(
             query,
             (
                 datos["id_cliente"],
+                datos["email"],  # Ahora se incluye el email
                 datos.get("lineas_moviles", ""),
                 datos.get("servicios_adicionales", "")
             ),
@@ -52,6 +53,7 @@ def insertar_en_bbdd(datos):
     except mariadb.Error as e:
         print(f"Error al insertar en la base de datos: {e}")
         return False
+
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -128,6 +130,7 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
     # Preparar los datos para insertar en la base de datos
     datos_a_insertar = {
         "id_cliente": cuenta_id,
+        "email": datos_cliente["email"],  # Asegúrate de que el email está aquí
         "lineas_moviles": json.dumps([item["original"] for item in lineas_moviles]),  # Solo los datos originales
         "servicios_adicionales": json.dumps([item["original"] for item in servicios_adicionales])  # Solo los datos originales
     }
