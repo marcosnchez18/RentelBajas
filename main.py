@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from correo import enviar_correo_confirmacion, generar_enlace, verificar_token
 import mariadb
+import json
 
 # Configuración de la base de datos
 DB_CONFIG = {
@@ -63,11 +64,12 @@ async def mostrar_cliente_formulario(request: Request, id: int):
     return templates.TemplateResponse("cliente_formulario.html", {"request": request, "id": id})
 
 
+
 @app.post("/confirmar_baja")
 async def confirmar_baja(request: Request):
     data = await request.json()
     email_cliente = data.get("email")
-    productos = data.get("productos", [])
+    productos = data.get("productos", [])  # Lista de objetos JSON
     cuenta_id = str(data.get("cuenta_id"))
     nombre_cliente = data.get("nombre")
     direccion_cliente = data.get("direccion")
@@ -82,11 +84,11 @@ async def confirmar_baja(request: Request):
     enlace_confirmacion = generar_enlace(email_cliente, cuenta_id)
     enviar_correo_confirmacion(email_cliente, enlace_confirmacion)
 
-    # Guardar datos del cliente y productos seleccionados
+    # Almacenar datos completos en el diccionario temporal
     datos_seleccionados[cuenta_id] = {
         "id_cliente": cuenta_id,
         "email": email_cliente,
-        "productos": productos,
+        "productos": productos,  # Datos completos
         "nombre": nombre_cliente,
         "direccion": direccion_cliente,
         "telefono": telefono_cliente
@@ -107,20 +109,37 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
     if not datos_cliente:
         raise HTTPException(status_code=404, detail="Datos no encontrados")
 
-    # Preparar los datos para la tabla bajas
-    lineas_moviles = [prod for prod in datos_cliente["productos"] if "Número:" in prod]
-    servicios_adicionales = [prod for prod in datos_cliente["productos"] if "Descripción:" in prod]
+    # Separar productos en líneas móviles y servicios adicionales
+    lineas_moviles = []
+    servicios_adicionales = []
 
+    for producto in datos_cliente["productos"]:
+        if "DDI" in producto:  # Si el producto tiene DDI, es una línea móvil
+            lineas_moviles.append({
+                "mostrar": f"Número: {producto['DDI']}\nTarifa: {producto['NomTarifa']}\nPrecio: {producto['PvpCuotaTarifa']}€",
+                "original": producto  # Mantener el original para la base de datos
+            })
+        else:  # Si no tiene DDI, se considera un servicio adicional
+            servicios_adicionales.append({
+                "mostrar": f"Descripción: {producto['Descripcion']}\nPrecio: {producto.get('Precio', 0)}€",
+                "original": producto  # Mantener el original para la base de datos
+            })
+
+    # Preparar los datos para insertar en la base de datos
     datos_a_insertar = {
         "id_cliente": cuenta_id,
-        "lineas_moviles": ", ".join(lineas_moviles),
-        "servicios_adicionales": ", ".join(servicios_adicionales)
+        "lineas_moviles": json.dumps([item["original"] for item in lineas_moviles]),  # Solo los datos originales
+        "servicios_adicionales": json.dumps([item["original"] for item in servicios_adicionales])  # Solo los datos originales
     }
 
     if insertar_en_bbdd(datos_a_insertar):
         print(f"Datos insertados correctamente para el cliente {cuenta_id}.")
     else:
         raise HTTPException(status_code=500, detail="Error al guardar los datos en la base de datos.")
+
+    # Mostrar datos formateados para el usuario
+    lineas_moviles_formateadas = [item["mostrar"] for item in lineas_moviles]
+    servicios_adicionales_formateados = [item["mostrar"] for item in servicios_adicionales]
 
     return templates.TemplateResponse("confirmacion.html", {
         "request": request,
@@ -129,6 +148,6 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
         "nombre": datos_cliente["nombre"],
         "direccion": datos_cliente["direccion"],
         "telefono": datos_cliente["telefono"],
-        "productos": datos_cliente["productos"]
+        "lineas_moviles": lineas_moviles_formateadas,
+        "servicios_adicionales": servicios_adicionales_formateados
     })
-

@@ -29,10 +29,12 @@ async function obtenerProductos(id) {
             Object.values(productos.lineas_moviles).forEach(linea => {
                 productosHTML += `
                     <div class="flex flex-col items-start p-4 bg-gray-200 rounded">
-                        <input type="checkbox" class="mr-2 mb-2" value="Número: ${linea.DDI} - Tarifa: ${linea.NomTarifa} - Precio: ${linea.PvpCuotaTarifa}€">
+                        <input type="checkbox" class="mr-2 mb-2" value="Número: ${linea.DDI} - Tarifa: ${linea.NomTarifa} - Precio: ${linea.PvpCuotaTarifa}€"
+                               data-producto='${JSON.stringify(linea)}'>
                         <span><strong>Número:</strong> ${linea.DDI}</span>
                         <span><strong>Tarifa:</strong> ${linea.NomTarifa}</span>
                         <span><strong>Precio:</strong> ${linea.PvpCuotaTarifa}€</span>
+                        <span style="display:none;">${JSON.stringify(linea)}</span> <!-- Línea oculta -->
                     </div>`;
             });
             productosHTML += `</div>`;
@@ -44,9 +46,11 @@ async function obtenerProductos(id) {
             Object.values(productos.servicios_adicionales).forEach(servicio => {
                 productosHTML += `
                     <div class="flex flex-col items-start p-4 bg-gray-200 rounded">
-                        <input type="checkbox" class="mr-2 mb-2" value="Descripción: ${servicio.Descripcion} - Precio: ${servicio.Precio}€">
+                        <input type="checkbox" class="mr-2 mb-2" value="Descripción: ${servicio.Descripcion} - Precio: ${servicio.Precio}€"
+                               data-producto='${JSON.stringify(servicio)}'>
                         <span><strong>Descripción:</strong> ${servicio.Descripcion}</span>
                         <span><strong>Precio:</strong> ${servicio.Precio}€</span>
+                        <span style="display:none;">${JSON.stringify(servicio)}</span> <!-- Línea oculta -->
                     </div>`;
             });
             productosHTML += `</div>`;
@@ -58,14 +62,13 @@ async function obtenerProductos(id) {
     }
 }
 
-
 // Llama a la función de obtención de productos con el ID de la cuenta
 obtenerProductos(cuentaID);
 
 // Función para confirmar la baja y enviar el correo de confirmación
 function confirmarBaja() {
     const productosSeleccionados = Array.from(document.querySelectorAll("#cuentasResumen input[type='checkbox']:checked"))
-        .map(checkbox => checkbox.value);
+        .map(checkbox => JSON.parse(checkbox.dataset.producto)); // Lee el contenido completo del atributo data-producto
 
     const email = document.getElementById("email").value;
 
@@ -98,7 +101,7 @@ function confirmarBaja() {
 
     const payload = {
         email: email,
-        productos: productosSeleccionados,
+        productos: productosSeleccionados, // Enviar datos completos
         cuenta_id: cuentaId,
         nombre: nombre,
         direccion: direccion,

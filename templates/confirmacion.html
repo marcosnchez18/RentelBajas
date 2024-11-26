@@ -11,13 +11,11 @@
 
     <!-- Contenedor Principal -->
     <div class="container mx-auto mt-12 max-w-3xl bg-white shadow-lg rounded-lg border border-gray-200">
-        <!-- Cabecera con Logo -->
-        <div class="bg-white-600 rounded-t-lg text-white py-6 px-8">
-            <div class="flex justify-center">
-                <img src="/static/img/logo.png" alt="Logo Rentel" class="w-24 h-auto">
-            </div>
-            <br/>
-            <h2 class="text-center bg-black-600 text-black text-4xl">Baja de Productos</h2>
+        <!-- Cabecera -->
+        <div class="bg-white rounded-t-lg text-white py-6 px-8 text-center">
+            <img src="/static/img/logo.png" alt="Logo Rentel" class="w-24 h-auto mx-auto mb-4">
+            <h2 class="text-3xl font-bold text-black">Confirmación de Baja de Productos</h2>
+
         </div>
 
         <!-- Datos del Cliente -->
@@ -34,17 +32,28 @@
         <!-- Productos Seleccionados -->
         <div class="px-8 py-6 bg-gray-50">
             <h3 class="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">Productos Seleccionados para Baja</h3>
-            <ul class="list-disc list-inside text-lg space-y-3 text-gray-800">
-                {% for producto in productos %}
-                    <li class="py-2 border-b border-gray-200 last:border-none">{{ producto }}</li>
-                {% endfor %}
-            </ul>
+            <div>
+                <h4 class="text-lg font-semibold mb-2">Líneas Móviles</h4>
+                <ul class="list-disc list-inside text-lg space-y-3 text-gray-800">
+                    {% for linea in lineas_moviles %}
+                        <li class="py-2 border-b border-gray-200 last:border-none">{{ linea }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="mt-6">
+                <h4 class="text-lg font-semibold mb-2">Servicios Adicionales</h4>
+                <ul class="list-disc list-inside text-lg space-y-3 text-gray-800">
+                    {% for servicio in servicios_adicionales %}
+                        <li class="py-2 border-b border-gray-200 last:border-none">{{ servicio }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
 
         <!-- Botones de Acción -->
         <div class="px-8 py-6 text-center">
             <button id="confirmarBajaBtn" class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-green-600 hover:shadow-lg transition-all duration-200">
-                Confirmar baja
+                Confirmar Baja
             </button>
         </div>
     </div>
