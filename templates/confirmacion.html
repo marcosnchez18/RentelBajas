@@ -6,37 +6,85 @@
     <title>Confirmación de Baja de Productos</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 font-serif text-gray-800">
+<body class="bg-gray-100 font-sans text-gray-900">
 
-    <div class="container mx-auto mt-12 max-w-2xl">
-        <h2 class="text-center text-4xl font-bold text-gray-800 mb-10">Confirmación de Baja de Productos</h2>
+    <!-- Contenedor Principal -->
+    <div class="container mx-auto mt-12 max-w-3xl bg-white shadow-lg rounded-lg border border-gray-200">
+        <!-- Cabecera con Logo -->
+        <div class="bg-white-600 rounded-t-lg text-white py-6 px-8">
+            <div class="flex justify-center">
+                <img src="/static/img/logo.png" alt="Logo Rentel" class="w-24 h-auto">
+            </div>
+            <br/>
+            <h2 class="text-center bg-black-600 text-black text-4xl">Baja de Productos</h2>
 
-      
-        <div class="bg-white shadow-lg rounded-lg p-10 mb-8 border border-gray-200">
-            <h3 class="text-2xl font-semibold mb-6 text-gray-600">Datos del Cliente</h3>
-            <div class="text-lg leading-relaxed">
-                <p class="mb-4"><span class="font-semibold text-gray-700">Nombre:</span> {{ nombre }}</p>
-                <p class="mb-4"><span class="font-semibold text-gray-700">Email:</span> {{ email }}</p>
-                <p class="mb-4"><span class="font-semibold text-gray-700">Teléfono:</span> {{ telefono }}</p>
+
+        </div>
+
+        <!-- Datos del Cliente -->
+        <div class="px-8 py-6">
+            <h3 class="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">Datos del Cliente</h3>
+            <div class="text-lg space-y-4">
+                <p><span class="font-semibold text-gray-700">Nombre:</span> {{ nombre }}</p>
+                <p><span class="font-semibold text-gray-700">Email:</span> {{ email }}</p>
+                <p><span class="font-semibold text-gray-700">Teléfono:</span> {{ telefono }}</p>
                 <p><span class="font-semibold text-gray-700">Dirección:</span> {{ direccion }}</p>
             </div>
         </div>
 
-    
-        <div class="bg-white shadow-lg rounded-lg p-10 mb-8 border border-gray-200">
-            <h3 class="text-2xl font-semibold mb-6 text-gray-600">Productos Seleccionados para Baja</h3>
-            <ul class="list-disc list-inside text-lg text-gray-700">
+        <!-- Productos Seleccionados -->
+        <div class="px-8 py-6 bg-gray-50">
+            <h3 class="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">Productos Seleccionados para Baja</h3>
+            <ul class="list-disc list-inside text-lg space-y-3 text-gray-800">
                 {% for producto in productos %}
-                    <li class="border-b border-gray-100 py-3">{{ producto }}</li>
+                    <li class="py-2 border-b border-gray-200 last:border-none">{{ producto }}</li>
                 {% endfor %}
             </ul>
         </div>
 
-        <div class="text-center space-x-6">
-            <button class="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 text-lg">Confirmar</button>
-            <button class="bg-red-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-red-700 transition-all duration-200 transform hover:scale-105 text-lg">Rechazar</button>
+        <!-- Botones de Acción -->
+        <div class="px-8 py-6 text-center">
+            <button class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-green-600 hover:shadow-lg transition-all duration-200">
+                Confirmar baja
+            </button>
+            
         </div>
     </div>
+
+    <!-- Pie de Página -->
+    <footer class="mt-12 bg-gray-900 text-white py-8">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <!-- Oficina -->
+            <div class="text-center md:text-left mb-6 md:mb-0">
+                <h4 class="font-semibold text-lg text-yellow-400 mb-2">Nuestra Oficina</h4>
+                <p class="text-sm">
+                    Av. Cabo Noval, 17<br>
+                    11540 Sanlúcar de Barrameda<br>
+                    Cádiz, España
+                </p>
+            </div>
+            <!-- Contacto -->
+            <div class="text-center md:text-left mb-6 md:mb-0">
+                <h4 class="font-semibold text-lg text-yellow-400 mb-2">Contáctanos</h4>
+                <p class="text-sm">
+                    Teléfono: <a href="tel:+34856135158" class="text-blue-400 hover:underline">856 135 158</a><br>
+                    Email: <a href="mailto:clientes@rentelwifi.com" class="text-blue-400 hover:underline">clientes@rentelwifi.com</a>
+                </p>
+            </div>
+            <!-- Redes Sociales -->
+            <div class="text-center">
+                <h4 class="font-semibold text-lg text-yellow-400 mb-2">Síguenos</h4>
+                <div class="flex justify-center space-x-4">
+                    <a href="https://api.whatsapp.com/send?phone={movil_wassap}&text={text_wassap}" target="_blank">
+                        <img src="/static/img/wasa.png" alt="WhatsApp" class="w-8 h-8">
+                    </a>
+                    <a href="mailto:{destinatario}">
+                        <img src="/static/img/email.jpg" alt="Email" class="w-8 h-8">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
 </body>
 </html>

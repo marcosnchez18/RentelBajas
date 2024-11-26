@@ -19,7 +19,7 @@ if (clienteSeleccionado) {
 // Función para obtener productos del cliente por ID específico de cuenta
 async function obtenerProductos(id) {
     try {
-        const response = await fetch(`http://10.58.6.89:8082/cliente/${id}/products`);
+        const response = await fetch(`http://10.58.6.92:8082/cliente/${id}/products`);
         const productos = await response.json();
         let productosHTML = "";
 

@@ -4,7 +4,7 @@ document.getElementById("searchForm").addEventListener("submit", async function(
     const searchValue = document.getElementById("searchValue").value;
 
     try {
-        const response = await fetch("http://10.58.6.89:8082/get_data_client_baja_for_dni", {
+        const response = await fetch("http://10.58.6.92:8082/get_data_client_baja_for_dni", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ [searchType]: searchValue })
