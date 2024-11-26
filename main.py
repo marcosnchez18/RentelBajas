@@ -33,17 +33,15 @@ def insertar_en_bbdd(datos):
         cursor = connection.cursor()
 
         query = """
-        INSERT INTO bajas (id_cliente, lineas_moviles, servicios_adicionales, internet, fijos, fecha_baja) 
-        VALUES (?, ?, ?, ?, ?, NOW())
+        INSERT INTO bajas (id_cliente, lineas_moviles, servicios_adicionales, fecha_baja) 
+        VALUES (?, ?, ?, NOW())
         """
         cursor.execute(
             query,
             (
                 datos["id_cliente"],
                 datos.get("lineas_moviles", ""),
-                datos.get("servicios_adicionales", ""),
-                datos.get("internet", ""),
-                datos.get("fijos", "")
+                datos.get("servicios_adicionales", "")
             ),
         )
         connection.commit()
@@ -112,15 +110,11 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
     # Preparar los datos para la tabla bajas
     lineas_moviles = [prod for prod in datos_cliente["productos"] if "Número:" in prod]
     servicios_adicionales = [prod for prod in datos_cliente["productos"] if "Descripción:" in prod]
-    internet = [prod for prod in datos_cliente["productos"] if "Fibra" in prod]
-    fijos = [prod for prod in datos_cliente["productos"] if "Fijo" in prod]
 
     datos_a_insertar = {
         "id_cliente": cuenta_id,
         "lineas_moviles": ", ".join(lineas_moviles),
-        "servicios_adicionales": ", ".join(servicios_adicionales),
-        "internet": ", ".join(internet),
-        "fijos": ", ".join(fijos)
+        "servicios_adicionales": ", ".join(servicios_adicionales)
     }
 
     if insertar_en_bbdd(datos_a_insertar):
@@ -138,26 +132,3 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
         "productos": datos_cliente["productos"]
     })
 
-
-@app.get("/promociones", response_class=HTMLResponse)
-async def mostrar_promociones(request: Request):
-    return templates.TemplateResponse("search_datos.html", {"request": request})
-
-
-@app.get("/cliente_promociones", response_class=HTMLResponse)
-async def cliente_promociones(request: Request, id: int):
-    return templates.TemplateResponse("cliente_promociones.html", {"request": request, "id": id})
-
-
-@app.get("/get_mobile_phones_promotions")
-async def obtener_promociones():
-    promociones = {
-        "datas_article": [
-            {"descripcion": "Equipo USB SMC con Conector"},
-            {"descripcion": "Antena"},
-            {"descripcion": "Cambio USB por AP integrado"},
-            {"descripcion": "AP Conceptronic integrado + POE"},
-            {"descripcion": "Concepto Fianza equipo (smc+antena)"}
-        ]
-    }
-    return promociones
