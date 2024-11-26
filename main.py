@@ -119,12 +119,12 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
         if "DDI" in producto:  # Si el producto tiene DDI, es una línea móvil
             lineas_moviles.append({
                 "mostrar": f"Número: {producto['DDI']}\nTarifa: {producto['NomTarifa']}\nPrecio: {producto['PvpCuotaTarifa']}€",
-                "original": producto  # Mantener el original para la base de datos
+                "original": {"DDI": producto["DDI"], "ID": producto["ID"]}
             })
         else:  # Si no tiene DDI, se considera un servicio adicional
             servicios_adicionales.append({
                 "mostrar": f"Descripción: {producto['Descripcion']}\nPrecio: {producto.get('Precio', 0)}€",
-                "original": producto  # Mantener el original para la base de datos
+                "original": {"ID": producto["ID"], "Descripcion": producto["Descripcion"], "Referencia": producto.get("Referencia", "")}
             })
 
     # Preparar los datos para insertar en la base de datos
@@ -154,3 +154,5 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
         "lineas_moviles": lineas_moviles_formateadas,
         "servicios_adicionales": servicios_adicionales_formateados
     })
+
+
