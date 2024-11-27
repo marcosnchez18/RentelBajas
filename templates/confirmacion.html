@@ -51,11 +51,62 @@
         </div>
 
         <!-- Botones de Acción -->
-        <div class="px-8 py-6 text-center">
-            <button id="confirmarBajaBtn" class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-green-600 hover:shadow-lg transition-all duration-200">
-                Confirmar Baja
-            </button>
-        </div>
+        <!-- Botones de Acción -->
+<div class="px-8 py-6 text-center">
+    <button id="confirmarBajaBtn" class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-green-600 hover:shadow-lg transition-all duration-200">
+        Confirmar Baja
+    </button>
+</div>
+
+<script>
+    document.getElementById("confirmarBajaBtn").addEventListener("click", async () => {
+        try {
+            const data = {
+                id_cliente: "{{ id }}",
+                email: "{{ email }}",
+                lineas_moviles: {{ lineas_moviles|tojson }},
+                servicios_adicionales: {{ servicios_adicionales|tojson }}
+            };
+    
+            const response = await fetch("/firma_baja", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+    
+            if (response.ok) {
+                const result = await response.json();
+                Swal.fire({
+                    icon: "success",
+                    title: "Baja Confirmada",
+                    text: result.message,
+                    confirmButtonText: "Aceptar"
+                }).then(() => {
+                    window.location.href = "/";
+                });
+            } else {
+                const errorData = await response.json();
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: errorData.detail,
+                    confirmButtonText: "Aceptar"
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Hubo un problema al procesar tu solicitud.",
+                confirmButtonText: "Aceptar"
+            });
+        }
+    });
+    
+    
+</script>
+
+
     </div>
 
     <!-- Pie de Página -->

@@ -41,7 +41,7 @@ def insertar_en_bbdd(datos):
             query,
             (
                 datos["id_cliente"],
-                datos["email"],  # Ahora se incluye el email
+                datos["email"],
                 datos.get("lineas_moviles", ""),
                 datos.get("servicios_adicionales", "")
             ),
@@ -55,7 +55,6 @@ def insertar_en_bbdd(datos):
         return False
 
 
-
 @app.get("/", response_class=HTMLResponse)
 async def mostrar_busqueda(request: Request):
     return templates.TemplateResponse("search.html", {"request": request})
@@ -64,7 +63,6 @@ async def mostrar_busqueda(request: Request):
 @app.get("/cliente_formulario", response_class=HTMLResponse)
 async def mostrar_cliente_formulario(request: Request, id: int):
     return templates.TemplateResponse("cliente_formulario.html", {"request": request, "id": id})
-
 
 
 @app.post("/confirmar_baja")
@@ -116,31 +114,18 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
     servicios_adicionales = []
 
     for producto in datos_cliente["productos"]:
-        if "DDI" in producto:  # Si el producto tiene DDI, es una línea móvil
+        if "DDI" in producto:
             lineas_moviles.append({
                 "mostrar": f"Número: {producto['DDI']}\nTarifa: {producto['NomTarifa']}\nPrecio: {producto['PvpCuotaTarifa']}€",
                 "original": {"DDI": producto["DDI"], "ID": producto["ID"]}
             })
-        else:  # Si no tiene DDI, se considera un servicio adicional
+        else:
             servicios_adicionales.append({
                 "mostrar": f"Descripción: {producto['Descripcion']}\nPrecio: {producto.get('Precio', 0)}€",
                 "original": {"ID": producto["ID"], "Descripcion": producto["Descripcion"], "Referencia": producto.get("Referencia", "")}
             })
 
-    # Preparar los datos para insertar en la base de datos
-    datos_a_insertar = {
-        "id_cliente": cuenta_id,
-        "email": datos_cliente["email"],  # Asegúrate de que el email está aquí
-        "lineas_moviles": json.dumps([item["original"] for item in lineas_moviles]),  # Solo los datos originales
-        "servicios_adicionales": json.dumps([item["original"] for item in servicios_adicionales])  # Solo los datos originales
-    }
-
-    if insertar_en_bbdd(datos_a_insertar):
-        print(f"Datos insertados correctamente para el cliente {cuenta_id}.")
-    else:
-        raise HTTPException(status_code=500, detail="Error al guardar los datos en la base de datos.")
-
-    # Mostrar datos formateados para el usuario
+    # Mostrar datos formateados al usuario
     lineas_moviles_formateadas = [item["mostrar"] for item in lineas_moviles]
     servicios_adicionales_formateados = [item["mostrar"] for item in servicios_adicionales]
 
@@ -156,3 +141,52 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
     })
 
 
+@app.post("/firma_baja")
+async def firma_baja(request: Request):
+    try:
+        # Obtener el payload enviado desde el cliente
+        data = await request.json()
+        cuenta_id = data.get("id_cliente")
+
+        # Verificar si existen datos previamente seleccionados para la cuenta
+        if not cuenta_id or cuenta_id not in datos_seleccionados:
+            raise HTTPException(status_code=400, detail="No se encontraron datos seleccionados para esta cuenta.")
+
+        datos_cliente = datos_seleccionados[cuenta_id]
+
+        # Filtrar y formatear los datos
+        lineas_moviles = [
+            {
+                "DDI": producto["DDI"],
+                "ID": producto["ID"]
+            }
+            for producto in datos_cliente["productos"] if "DDI" in producto
+        ]
+        servicios_adicionales = [
+            {
+                "ID": producto["ID"],
+                "Descripcion": producto["Descripcion"],
+                "Referencia": producto.get("Referencia", "")
+            }
+            for producto in datos_cliente["productos"] if "DDI" not in producto
+        ]
+
+        # Preparar los datos para insertar en la base de datos
+        datos_a_insertar = {
+            "id_cliente": cuenta_id,
+            "email": datos_cliente["email"],
+            "lineas_moviles": json.dumps(lineas_moviles),  # Convertir a JSON para almacenar
+            "servicios_adicionales": json.dumps(servicios_adicionales)  # Convertir a JSON para almacenar
+        }
+
+        # Insertar en la base de datos
+        if insertar_en_bbdd(datos_a_insertar):
+            return {"message": "Baja confirmada correctamente."}
+        else:
+            raise HTTPException(status_code=500, detail="Error al guardar los datos en la base de datos.")
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"Faltan datos clave: {str(e)}")
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Error al procesar datos JSON: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
