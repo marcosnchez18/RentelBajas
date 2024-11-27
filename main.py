@@ -141,6 +141,54 @@ async def confirmar_seleccion(request: Request, token: str = Query(...)):
     })
 
 
+def verificar_duplicados(id_cliente, lineas_moviles, servicios_adicionales):
+    """Verifica si las líneas móviles o servicios adicionales ya existen en la base de datos."""
+    try:
+        connection = mariadb.connect(**DB_CONFIG)
+        cursor = connection.cursor()
+
+        # Consultar las líneas móviles existentes
+        cursor.execute("""
+            SELECT JSON_EXTRACT(lineas_moviles, '$[*].ID') AS ids
+            FROM bajas
+            WHERE id_cliente = ?
+        """, (id_cliente,))
+        lineas_existentes = cursor.fetchall()
+
+        # Procesar los resultados de las líneas móviles
+        lineas_existentes_ids = set()
+        for ids in lineas_existentes:
+            if ids[0]:  # Verificar si el resultado no es None
+                lineas_existentes_ids.update(json.loads(ids[0]))
+
+        # Consultar los servicios adicionales existentes
+        cursor.execute("""
+            SELECT JSON_EXTRACT(servicios_adicionales, '$[*].ID') AS ids
+            FROM bajas
+            WHERE id_cliente = ?
+        """, (id_cliente,))
+        servicios_existentes = cursor.fetchall()
+
+        # Procesar los resultados de los servicios adicionales
+        servicios_existentes_ids = set()
+        for ids in servicios_existentes:
+            if ids[0]:  # Verificar si el resultado no es None
+                servicios_existentes_ids.update(json.loads(ids[0]))
+
+        cursor.close()
+        connection.close()
+
+        # Filtrar las nuevas líneas móviles y servicios adicionales
+        nuevas_lineas = [linea for linea in lineas_moviles if linea["ID"] not in lineas_existentes_ids]
+        nuevos_servicios = [servicio for servicio in servicios_adicionales if servicio["ID"] not in servicios_existentes_ids]
+
+        return nuevas_lineas, nuevos_servicios
+    except mariadb.Error as e:
+        print(f"Error al verificar duplicados en la base de datos: {e}")
+        return lineas_moviles, servicios_adicionales  # En caso de error, continuar sin filtrar
+
+
+
 @app.post("/firma_baja")
 async def firma_baja(request: Request):
     try:
@@ -154,29 +202,28 @@ async def firma_baja(request: Request):
 
         datos_cliente = datos_seleccionados[cuenta_id]
 
-        # Filtrar y formatear los datos
+        # Separar y formatear los datos para la base de datos
         lineas_moviles = [
-            {
-                "DDI": producto["DDI"],
-                "ID": producto["ID"]
-            }
+            {"DDI": producto["DDI"], "ID": producto["ID"]}
             for producto in datos_cliente["productos"] if "DDI" in producto
         ]
         servicios_adicionales = [
-            {
-                "ID": producto["ID"],
-                "Descripcion": producto["Descripcion"],
-                "Referencia": producto.get("Referencia", "")
-            }
+            {"ID": producto["ID"], "Descripcion": producto["Descripcion"], "Referencia": producto.get("Referencia", "")}
             for producto in datos_cliente["productos"] if "DDI" not in producto
         ]
+
+        # Verificar duplicados
+        nuevas_lineas, nuevos_servicios = verificar_duplicados(cuenta_id, lineas_moviles, servicios_adicionales)
+
+        if not nuevas_lineas and not nuevos_servicios:
+            return {"message": "Ya has confirmado la baja de tus productos."}
 
         # Preparar los datos para insertar en la base de datos
         datos_a_insertar = {
             "id_cliente": cuenta_id,
             "email": datos_cliente["email"],
-            "lineas_moviles": json.dumps(lineas_moviles),  # Convertir a JSON para almacenar
-            "servicios_adicionales": json.dumps(servicios_adicionales)  # Convertir a JSON para almacenar
+            "lineas_moviles": json.dumps(nuevas_lineas),  # Convertir a JSON para almacenar
+            "servicios_adicionales": json.dumps(nuevos_servicios)  # Convertir a JSON para almacenar
         }
 
         # Insertar en la base de datos
