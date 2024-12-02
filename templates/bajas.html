@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Bajas</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100">
+
+    <nav class="bg-gray-50 shadow-md py-4">
+        <div class="container mx-auto flex items-center justify-between px-6">
+            <a href="#" class="text-blue-600 font-semibold text-xl">
+                <img src="/static/img/logo.png" alt="Logo" class="w-12">
+            </a>
+            <ul class="flex space-x-4">
+                <li><a href="#" class="text-gray-600 hover:text-blue-600">Home</a></li>
+                <li><a href="#" class="text-gray-600 hover:text-blue-600">Sobre nosotros</a></li>
+                <li><a href="#" class="text-gray-600 hover:text-blue-600">Contactar</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mx-auto py-8">
+        <h1 class="text-3xl font-semibold mb-4">Lista de Bajas</h1>
+
+        <!-- Contenedor para barra desplazable -->
+        <div class="overflow-x-auto">
+            <table class="table-auto w-full border border-gray-200 text-sm text-center">
+                <thead class="bg-gray-200">
+                    <tr class="bg-blue-600 text-white">
+                        <th class="px-4 py-2 whitespace-nowrap">Nombre</th>
+                        <th class="px-4 py-2 whitespace-nowrap">DNI</th>
+                        <th class="px-4 py-2 whitespace-nowrap">Teléfono Móvil</th>
+                        <th class="px-4 py-2 whitespace-nowrap text-left">Dirección</th>
+                        <th class="px-4 py-2 whitespace-nowrap">Líneas Móviles</th>
+                        <th class="px-4 py-2 whitespace-nowrap">Servicios Adicionales</th>
+                        <th class="px-4 py-2 whitespace-nowrap">Fecha de Baja</th>
+                        <th class="px-4 py-2 whitespace-nowrap">Email</th>
+                        <th class="px-4 py-2 whitespace-nowrap">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for baja in bajas %}
+                    <tr class="border-b">
+                        <td class="px-4 py-2 whitespace-nowrap">{{ baja.nombre_cliente }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ baja.dni_cliente }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ baja.telefono_movil }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-left">{{ baja.direccion }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                            {% if baja.lineas_moviles != '[]' and baja.lineas_moviles|length > 0 %}
+                                <button 
+                                    class="bg-blue-500 text-white px-2 py-1 rounded" 
+                                    onclick="verLineasMoviles(this)" 
+                                    data-lineas='{{ baja.lineas_moviles | safe }}'>
+                                    Ver productos
+                                </button>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                            {% if baja.servicios_adicionales != '[]' and baja.servicios_adicionales|length > 0 %}
+                                <button 
+                                    class="bg-blue-500 text-white px-2 py-1 rounded" 
+                                    onclick="verServiciosAdicionales(this)" 
+                                    data-servicios='{{ baja.servicios_adicionales | safe }}'>
+                                    Ver productos
+                                </button>
+                            {% endif %}
+                        </td>
+                        
+                        
+                        <td class="px-4 py-2 whitespace-nowrap">{{ baja.fecha_baja.strftime('%d-%m-%Y') }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ baja.email }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                            <form method="post" action="/actualizar_estado/" onsubmit="mostrarAlerta(event)">
+                                <input type="hidden" name="id_baja" value="{{ baja.id }}">
+                                <select name="estado" class="border px-2 py-1 rounded">
+                                    <option value="pendiente" {% if baja.estado == 'pendiente' %} selected {% endif %}>Pendiente</option>
+                                    <option value="confirmada" {% if baja.estado == 'confirmada' %} selected {% endif %}>Confirmada</option>
+                                </select>
+                                <button type="submit" class="bg-green-500 text-white px-4 py-1 rounded ml-2">Actualizar</button>
+                            </form>
+                        </td>
+                        
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function verLineasMoviles(buttonElement) {
+            const lineasJson = buttonElement.dataset.lineas;
+            if (!lineasJson || lineasJson.trim() === "") {
+                Swal.fire('Error', 'No se encontraron líneas móviles', 'error');
+                return;
+            }
+            try {
+                const lineas = JSON.parse(lineasJson);
+                let htmlContent = "<ul>";
+                lineas.forEach(linea => {
+                    htmlContent += `<li><strong>- DDI:</strong> ${linea.DDI}, <strong>ID:</strong> ${linea.ID}</li>`;
+                });
+                htmlContent += "</ul>";
+                Swal.fire({ title: 'Líneas Móviles', html: htmlContent, confirmButtonText: 'Cerrar' });
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'Error al procesar las líneas móviles', 'error');
+            }
+        }
+
+        function verServiciosAdicionales(buttonElement) {
+            const serviciosJson = buttonElement.dataset.servicios;
+            if (!serviciosJson || serviciosJson.trim() === "") {
+                Swal.fire('Error', 'No se encontraron servicios adicionales', 'error');
+                return;
+            }
+            try {
+                const servicios = JSON.parse(serviciosJson);
+                let htmlContent = "<ul>";
+                servicios.forEach(servicio => {
+                    htmlContent += `<li><strong>- ID:</strong> ${servicio.ID}, <strong>Descripción:</strong> ${servicio.Descripcion}, <strong>Referencia:</strong> ${servicio.Referencia}</li>`;
+                });
+                htmlContent += "</ul>";
+                Swal.fire({ title: 'Servicios Adicionales', html: htmlContent, confirmButtonText: 'Cerrar' });
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'Error al procesar los servicios adicionales', 'error');
+            }
+        }
+
+        
+            function mostrarAlerta(event) {
+                event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
+                const form = event.target; // Referencia al formulario
+        
+                // Opcional: puedes enviar el formulario con JavaScript
+                fetch(form.action, {
+                    method: form.method,
+                    body: new FormData(form),
+                })
+                    .then((response) => {
+                        if (response.ok) {
+                            // Mostrar alerta al usuario
+                            Swal.fire({
+                                title: 'Estado actualizado',
+                                text: 'El estado ha sido cambiado correctamente.',
+                                icon: 'success',
+                                confirmButtonText: 'Aceptar',
+                            });
+                        } else {
+                            // Mostrar error en caso de que la petición falle
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Hubo un problema al actualizar el estado.',
+                                icon: 'error',
+                                confirmButtonText: 'Aceptar',
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error al enviar el formulario:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Ocurrió un error inesperado.',
+                            icon: 'error',
+                            confirmButtonText: 'Aceptar',
+                        });
+                    });
+            }
+        
+        
+    </script>
+
+</body>
+</html>

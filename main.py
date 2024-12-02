@@ -1,10 +1,15 @@
-from fastapi import FastAPI, Request, HTTPException, Query
+from fastapi import FastAPI, Request, Form,  HTTPException, Query
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from correo import enviar_correo_confirmacion, generar_enlace, verificar_token
 import mariadb
 import json
+from pydantic import BaseModel
+from fastapi.responses import RedirectResponse
+import pytz
+from datetime import datetime
+import httpx
 
 # Configuración de la base de datos
 DB_CONFIG = {
@@ -25,6 +30,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Plantillas
 templates = Jinja2Templates(directory="templates")
+
+
 
 
 def insertar_en_bbdd(datos):
@@ -58,6 +65,7 @@ def insertar_en_bbdd(datos):
 @app.get("/", response_class=HTMLResponse)
 async def mostrar_busqueda(request: Request):
     return templates.TemplateResponse("search.html", {"request": request})
+
 
 
 @app.get("/cliente_formulario", response_class=HTMLResponse)
@@ -223,8 +231,16 @@ async def firma_baja(request: Request):
             "id_cliente": cuenta_id,
             "email": datos_cliente["email"],
             "lineas_moviles": json.dumps(nuevas_lineas),  # Convertir a JSON para almacenar
-            "servicios_adicionales": json.dumps(nuevos_servicios)  # Convertir a JSON para almacenar
+            "servicios_adicionales": json.dumps(nuevos_servicios),  # Convertir a JSON para almacenar
+            "estado": "pendiente"
+
+            
         }
+        
+        #CUANDO CREEMOS LA BBDD SE INSERTA ESTO:
+        #ALTER TABLE bajas
+        #ADD COLUMN estado ENUM('pendiente', 'completada') NOT NULL DEFAULT 'pendiente';
+
 
         # Insertar en la base de datos
         if insertar_en_bbdd(datos_a_insertar):
@@ -237,3 +253,134 @@ async def firma_baja(request: Request):
         raise HTTPException(status_code=400, detail=f"Error al procesar datos JSON: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
+
+
+
+
+def convertir_a_hora_espana(fecha_utc):
+    zona_horaria_espana = pytz.timezone('Europe/Madrid')
+    fecha_utc = fecha_utc.replace(tzinfo=pytz.utc)  # Asegurarse de que la fecha está en UTC
+    fecha_espana = fecha_utc.astimezone(zona_horaria_espana)  # Convertir a hora española
+    return fecha_espana
+
+import requests
+from fastapi import HTTPException
+
+def obtener_datos_cliente(id_cliente: int):
+    # URL de la API externa
+    api_url = "http://10.58.6.92:8082/get_data_client_baja_for_dni"
+    
+    # Datos que se envían en la solicitud POST
+    payload = {"id_cliente": id_cliente}
+    
+    try:
+        # Realizamos la solicitud POST a la API externa
+        response = requests.post(api_url, json=payload)
+        response.raise_for_status()  # Esto lanzará un error si la respuesta no es 200 OK
+        return response.json()[0]  # Asumimos que la API devuelve un solo objeto dentro de una lista
+    except requests.exceptions.RequestException as e:
+        print(f"Error al obtener los datos del cliente: {e}")
+        return None
+
+# Ruta para obtener las bajas
+@app.get("/bajas", response_class=HTMLResponse)
+async def obtener_bajas(
+    request: Request,
+    fecha_inicio: str = Query(None), 
+    fecha_fin: str = Query(None),  
+    estado: str = Query(None)
+):
+    try:
+        # Conectar a la base de datos
+        connection = mariadb.connect(**DB_CONFIG)
+        cursor = connection.cursor()
+
+        # Construcción de la consulta base
+        query = "SELECT * FROM bajas WHERE 1=1"
+        params = []
+
+        # Filtrar por fecha de baja
+        if fecha_inicio:
+            fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+            fecha_inicio_dt_espana = pytz.timezone('Europe/Madrid').localize(fecha_inicio_dt)
+            query += " AND fecha_baja >= ?"
+            params.append(fecha_inicio_dt_espana)
+
+        if fecha_fin:
+            fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+            fecha_fin_dt_espana = pytz.timezone('Europe/Madrid').localize(fecha_fin_dt)
+            query += " AND fecha_baja <= ?"
+            params.append(fecha_fin_dt_espana)
+
+        # Filtrar por estado
+        if estado:
+            query += " AND estado = ?"
+            params.append(estado)
+
+        # Ejecutar la consulta SQL
+        cursor.execute(query, params)
+        bajas = cursor.fetchall()
+
+        # Obtener los datos del cliente de la API externa para cada baja
+        bajas_con_info_cliente = []
+        for baja in bajas:
+            id_cliente = baja[1]  # Asumiendo que el ID del cliente está en la columna 1
+            datos_cliente = obtener_datos_cliente(id_cliente)
+            if datos_cliente:
+                baja_con_info = {
+                    "id": baja[0],
+                    "id_cliente": baja[1],
+                    "lineas_moviles": baja[2],
+                    "servicios_adicionales": baja[3],
+                    "fecha_baja": baja[4],
+                    "email": baja[5],
+                    "estado": baja[6],
+                    "nombre_cliente": datos_cliente["nombre"],
+                    "dni_cliente": datos_cliente["dni"],
+                    "telefono_movil": datos_cliente["telefonomovil"],
+                    "direccion": datos_cliente["direccion"]
+                }
+                bajas_con_info_cliente.append(baja_con_info)
+
+        # Cerrar la conexión a la base de datos
+        cursor.close()
+        connection.close()
+
+        # Renderizar la plantilla HTML con los datos de las bajas y los clientes
+        return templates.TemplateResponse("bajas.html", {
+            "request": request,
+            "bajas": bajas_con_info_cliente
+        })
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener las bajas: {str(e)}")
+ 
+        
+@app.post("/actualizar_estado/")
+async def actualizar_estado(id_baja: str = Form(...), estado: str = Form(...)):
+    try:
+        # Conectar a la base de datos
+        connection = mariadb.connect(**DB_CONFIG)
+        cursor = connection.cursor()
+
+        # Consulta SQL para actualizar el estado
+        query = "UPDATE bajas SET estado = ? WHERE id = ?"
+        cursor.execute(query, (estado, id_baja))
+
+        # Confirmar los cambios
+        connection.commit()
+
+        # Cerrar la conexión
+        cursor.close()
+        connection.close()
+
+        # Redirigir con un parámetro de éxito
+        return RedirectResponse(url="/bajas?actualizado=true", status_code=303)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al actualizar el estado: {str(e)}")
+
+
+
+
+
